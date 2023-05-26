@@ -21,14 +21,15 @@ end intrinsic;
 //end function;
 
 //For converting characteristics to integers and back
-intrinsic TCharToIndex(chara::SeqEnum) -> Int
-  
+intrinsic TCharToIndex(chara::SeqEnum) -> RngIntElt
+{}
+  ZZ:=Integers();
   eps := Reverse(chara[1]);
   delta := Reverse(chara[2]);
   g := #eps;
   assert #delta eq g;
   
-  sum := &+[eps[i]*2^(g + i-1) : i in [1..g]] + &+[delta[i]*2^(i-1) : i in [1..g]];
+  sum := &+[(ZZ!eps[i])*2^(g + i-1) : i in [1..g]] + &+[(ZZ!delta[i])*2^(i-1) : i in [1..g]];
   if sum ne 0 then
     return sum;
   else
@@ -36,7 +37,8 @@ intrinsic TCharToIndex(chara::SeqEnum) -> Int
   end if;
 end intrinsic;
 
-intrinsic IndexToTChar(index::SeqEnum, g) -> SeqEnum
+intrinsic IndexToTChar(index::RngIntElt, g::RngIntElt) -> SeqEnum
+{}
   s := Intseq(index mod 2^(2*g), 2, 2*g);
   s := Reverse(s);
   return [s[1..g], s[g+1..2*g]];

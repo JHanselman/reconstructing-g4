@@ -9,10 +9,6 @@
  */
 
 
-intrinsic ReconstructCurveG4(tau::AlgMatElt) -> Crv
-  g := NRows(tau);
-  
-end intrinsic;
 
 
 function RealPart(A)
@@ -21,6 +17,7 @@ end function;
 
 function NormalForm(A)
 	N := Nrows(A);
+	CC := BaseRing(A);
 	CCN := VectorSpace(CC, N);
 	ReA := RealPart(A);
 	ImA := RealPart(-CC.1*A);
@@ -37,13 +34,13 @@ end function;
 
 function ComputeThetas(tau)
   CC := BaseRing(tau);
-  g := NRows(tau);
+  g := Nrows(tau);
   thetas :=[];
-  chars_even := EvenThetaCharacteristics(g)
-  for i in [1..(2^g -1)]
+  chars_even := EvenThetaCharacteristics(g);
+  for i in [1..(2^(2*g) -1)] do
     characteristic := IndexToTChar(i, g);
     if characteristic in chars_even then
-        thetas[i] := Sqrt(Theta([CC!0 : i in [1..g]], tau : char := characteristic)*Theta([CC!0 : i in [1..g]], tau : char := characteristic));  
+        thetas[i] := Theta([CC!0 : i in [1..g]], tau : char := characteristic);  
     else
         Append(~thetas, CC!0);
     end if;
@@ -51,7 +48,8 @@ function ComputeThetas(tau)
   return thetas;
 end function;
 
-function ComputeTritangents(tau)
+function ComputeTritangents(thetas)
+
   tritangentsys :=
    [[[GF(2)| 0, 1, 1, 0, 0, 1, 0, 0 ], [ GF(2)|0, 1, 1, 0, 1, 1, 0, 0 ]],
     [[GF(2)| 0, 1, 0, 0, 0, 1, 0, 0 ], [GF(2)| 0, 1, 0, 0, 1, 1, 0, 0 ]],
@@ -71,8 +69,7 @@ function ComputeTritangents(tau)
     [GF(2)|1, 0, 1, 0, 0, 1, 1, 0],
     [GF(2)|0, 1, 1, 0, 0, 1, 0, 0]];
   
-  CC := BaseRing(tau);
-  theta_list := AssociativeArray();
+  CC := Parent(thetas[1]);
   tritangents := [[[CC!0,0,0,0], [CC!0,0,0,0]]: t in [1..10]];
   constant := [CC!0,0,0,0];
   for k in [1..4] do
@@ -81,24 +78,14 @@ function ComputeTritangents(tau)
     signs := signs_in_derivative_formula(A);
     T1 := CC!1;
     T2 := CC!1;
-    for c in S1 do
-      test := IsDefined(theta_list, c);
-      if not test then
-        chara := [ZZ!v : v in Eltseq(c)];
-        chara := [chara[1..4], chara[5..8]];
-        theta_list[c] :=  Theta([CC | 0,0,0,0], tau : char := chara, prec := prec);
-      end if;
-      T1 *:= theta_list[c];
+    for s in S1 do
+      ss := Eltseq(s);
+      T1 *:= thetas[TCharToIndex([ss[1..4],ss[5..8]])];
     end for;
 
-    for c in S2 do
-      test := IsDefined(theta_list, c);
-      if not test then
-        chara := [ZZ!v : v in Eltseq(c)];
-        chara := [chara[1..4], chara[5..8]];
-        theta_list[c] :=  Theta([CC | 0,0,0,0], tau : char := chara, prec := prec);
-      end if;
-      T2 *:= theta_list[c];
+    for s in S2 do
+      ss := Eltseq(s);
+      T2 *:= thetas[TCharToIndex([ss[1..4],ss[5..8]])];
     end for;
      constant[k] := signs[1]*T1 + signs[2]*T2;
   end for;
@@ -111,43 +98,53 @@ function ComputeTritangents(tau)
         signs := signs_in_derivative_formula(A);
         T1 := CC!1;
         T2 := CC!1;
-        for c in S1 do
-          test := IsDefined(theta_list, c);
-          if not test then
-            chara := [ZZ!v : v in Eltseq(c)];
-            chara := [chara[1..4], chara[5..8]];
-            theta_list[c] :=  Theta([CC | 0,0,0,0], tau : char := chara, prec := prec);
-          end if;
-          T1 *:= theta_list[c];
+        for s in S1 do
+          ss := Eltseq(s);
+          T1 *:= thetas[TCharToIndex([ss[1..4],ss[5..8]])];
         end for;
 
-        for c in S2 do
-          test := IsDefined(theta_list, c);
-          if not test then
-            chara := [ZZ!v : v in Eltseq(c)];
-            chara := [chara[1..4], chara[5..8]];
-            theta_list[c] :=  Theta([CC | 0,0,0,0], tau : char := chara, prec := prec);
-          end if;
-          T2 *:= theta_list[c];
+        for s in S2 do
+          ss := Eltseq(s);
+          T2 *:= thetas[TCharToIndex([ss[1..4],ss[5..8]])];
         end for;
 
         tritangents[i][j][k] := (signs[1]*T1 + signs[2]*T2)/constant[k];
-
       end for;
     end for;
   end for;
   return tritangents;
 end function;
 
-function ComputeQuadric(tritangents)
+function ComputeQuadric(bitangents, tritangents)
+  r:= #tritangents;
+  CC := BaseRing(tritangents[1][1][1]);
+  RR := RealField(Precision(CC));
   CC4:=PolynomialRing(CC,4);
   x:=Matrix(4,1,[CC4.i: i in [1..4]]);
   mats1new:=[(Matrix(4,1, tritangents[i][1])*Matrix(1,4, tritangents[i][2])): i in [1..r]];
   mats1new:=[(m +Transpose(m))/2 : m in mats1new];
-  mats1newx:=Matrix(CC4, 1,r,[(Transpose(x)*ChangeRing(mats1new[i], CC4)*x)[1,1]: i in [1..r]]);
+  mats1newx:=Matrix(CC4, 1, r,[(Transpose(x)*ChangeRing(mats1new[i], CC4)*x)[1,1]: i in [1..r]]);
 
   Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
   vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
+  
+  CC3 := PolynomialRing(CC, 3);
+  
+  fs := [&+[el[i]*CC3.i : i in [1..3]] : el in bitangents[1..r]];
+  mons:=MonomialsOfDegree(CC3,2);
+
+  fsq_mat := [];
+  for f in fs do
+    cs := [];
+    for m in mons do
+      Append(~cs, MonomialCoefficient(f^2,m));
+    end for;
+    Append(~fsq_mat, cs);
+  end for;
+  fsq_mat := Matrix(fsq_mat);
+  si := NumericalKernel(fsq_mat);
+  sirows:=Nrows(si);
+  
   N:=HorizontalJoin([  DiagonalMatrix(Eltseq(vi[i]))*fsq_mat : i in [1..Nrows(vi) ]]);
   //TODO: Check singular values to see if rank is too small. If so then compute more tritangents.
 
@@ -164,3 +161,13 @@ function ComputeQuadric(tritangents)
 
   return Qnew;
 end function;
+
+intrinsic ReconstructCurveG4(tau::AlgMatElt) -> Crv
+{}
+  g := Nrows(tau);
+  thetas := ComputeThetas(tau);
+  print thetas;
+  tritangents := ComputeTritangents(thetas);
+  print tritangents;
+end intrinsic;
+
