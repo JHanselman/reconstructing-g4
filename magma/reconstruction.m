@@ -113,6 +113,7 @@ function ComputeTritangents(thetas)
       end for;
     end for;
   end for;
+  
   return tritangents;
 end function;
 
@@ -174,8 +175,7 @@ function ComputeBitangents(thetas)
 
   A := Matrix(3,3,[1/el : el in mods]);
   Ainv:=A^-1;
-  Ainv*Matrix(3,1,[BaseRing(Parent(Ainv)) | -1,-1,-1]);
-  lambdas := $1;
+  lambdas := Ainv*Matrix(3,1,[BaseRing(Parent(Ainv)) | -1,-1,-1]);
 
   mods_mat := [[mods[i], mods[i+1], mods[i+2]] : i in [1,4,7]];
   L:=DiagonalMatrix(Eltseq(lambdas));
@@ -219,9 +219,98 @@ function ComputeBitangents(thetas)
 
 end function;
 
+function ComputeSquareRootOnP1xP1(detqdualonsegre)
+
+  CC := BaseRing(detqdualonsegre);
+  CC4:=PolynomialRing(CC,4);
+  P1P1<x1,x2,y1,y2> := PolynomialRing(CC,4);
+  x:=[x1,x2];
+  y:=[y1,y2];
+  f := Evaluate(detqdualonsegre, [x1*y1, x2*y2, x1*y2, x2*y1]);
+
+  //xy[a,b] = x1^a * x2^(3-a) * y1^b * y2^(3-b) (with 0<= a,b ,+3) 
+  xy:= AssociativeArray();
+  P3mons:= AssociativeArray();
+
+  //P3mons defines pushforward of P1 x P1 -> P3 where P3mons[[a,b]] is the image of xy[a,b]
+  P3mons[[3,3]] := CC4.1^3;
+  P3mons[[3,0]] := CC4.3^3;
+  P3mons[[0,3]]:= CC4.4^3;
+  P3mons[[0,0]] := CC4.2^3;
+  P3mons[[3,1]] := CC4.3^2*CC4.1;
+  P3mons[[3,2]] := CC4.1^2*CC4.3;
+  P3mons[[0,1]] := CC4.2^2*CC4.4;
+  P3mons[[0,2]] := CC4.4^2*CC4.2;
+  P3mons[[1,3]] := CC4.4^2*CC4.1;
+  P3mons[[2,3]] := CC4.1^2*CC4.4;
+  P3mons[[1,0]] := CC4.2^2*CC4.3;
+  P3mons[[2,0]] := CC4.3^2*CC4.2;
+  P3mons[[2,1]] :=CC4.3^2 * CC4.4;
+  P3mons[[2,2]] := CC4.1^2 * CC4.2;
+  P3mons[[1,1]] := CC4.2^2 * CC4.1;
+  P3mons[[1,2]] := CC4.4^2 * CC4.3;
+
+
+  //Compute the coefficients of the monomials in the sqaureroot of f.
+  xy[[3,3]] := Sqrt(MonomialCoefficient(f, x1^6*y1^6));
+  xy[[3,0]] := Sqrt(MonomialCoefficient(f, x1^6*y2^6));
+  xy[[0,3]] := Sqrt(MonomialCoefficient(f, x2^6*y1^6));
+  xy[[0,0]] := Sqrt(MonomialCoefficient(f, x2^6*y2^6));
+
+  max:= 0;
+  start := [];
+  for i in Keys(xy) do
+    absval := Abs(xy[i]);
+    if absval gt max then
+      max := absval;
+      start := i;
+    end if;
+  end for;
+
+  hstep := 1;
+  vstep := 1;
+
+  if start[1] gt 0 then
+    hstep := -1;
+  end if;
+
+  if start[2] gt 0 then
+    vstep := -1;
+  end if;
+
+  for i in [0..3] do
+    for j in [0..3] do
+      if i eq 0 and j eq 0 then
+        continue;
+      end if;
+      n1 := start[1] + hstep * i; n2 := 3 - n1;
+      n3 := start[2] + vstep * j; n4 := 3 - n3;
+      mon := MonomialCoefficient(f, x1^(start[1] +n1)*x2^(3 - start[1] + n2) * y1^(start[2] + n3)*y2^(3 - start[2] + n4));
+      rect := &cat[[[[start[1] + hstep * mu,start[2] + vstep * nu], [start[1] + hstep * (i - mu),start[2] + vstep * (j - nu)]]  : mu in [0..i] | (mu ne 0 or nu ne 0) and (mu ne i or nu ne j)] : nu in [0..j]];
+      print "i =", i, "j=", j, "coords ", n1, n3, "\n";
+      print rect;
+      print x1^(start[1] +n1)*x2^(3 - start[1] + n2) * y1^(start[2] + n3)*y2^(3 - start[2] + n4), "\n";
+    
+      subtractsum := &+([xy[tup[1]] * xy[tup[2]] : tup in rect] cat [CC!0]);
+      xy[[n1,n3]] := ((mon - subtractsum  )/xy[start])/2;
+    end for;
+  end for;
+
+  sqrt:= P1P1!0;
+  SegreCubic := CC4!0;
+
+  for i in [0..3] do
+    for j in [0..3] do
+      sqrt +:= xy[[i,j]] *x1^i*x2^(3-i)*y1^j*y2^(3-j);
+      SegreCubic +:= xy[[i,j]] * P3mons[[i,j]];
+    end for;
+  end for;
+
+end function;
+
 function ComputeCurve(bitangents, tritangents)
   r:= #tritangents;
-  CC := BaseRing(tritangents[1][1][1]);
+  CC := Parent(tritangents[1][1][1]);
   RR := RealField(Precision(CC));
   CC4:=PolynomialRing(CC,4);
   x:=Matrix(4,1,[CC4.i: i in [1..4]]);
@@ -298,93 +387,13 @@ function ComputeCurve(bitangents, tritangents)
 
   v:=Matrix(CC4, [[CC4.1, CC4.2, CC4.3, CC4.4]]);
 
-  //Apply coordinate transformation to detqdual
+  //Apply coordinate transformation to detqdual to map the quadric to the Segre quadric
   detqdualonsegre := Evaluate(detqdual, Eltseq((v * ChangeRing(QtoSegre, CC4))[1]));
   
-  //Homogeneous
-  P1P1<x1,x2,y1,y2> := PolynomialRing(CC,4);
-  x:=[x1,x2];
-  y:=[y1,y2];
-  f := Evaluate(detqdualonsegre, [x1*y1, x2*y2, x1*y2, x2*y1]);
+  //Pull back to P1 x P1 and take the square root there
+  SegreCubic := ComputeSquareRootOnP1xP1(detqdualonsegre);
 
-
-  xy:= AssociativeArray();
-  P3mons:= AssociativeArray();
-
-  P3mons[[3,3]] := CC4.1^3;
-  P3mons[[3,0]] := CC4.3^3;
-  P3mons[[0,3]]:= CC4.4^3;
-  P3mons[[0,0]] := CC4.2^3;
-  P3mons[[3,1]] := CC4.3^2*CC4.1;
-  P3mons[[3,2]] := CC4.1^2*CC4.3;
-  P3mons[[0,1]] := CC4.2^2*CC4.4;
-  P3mons[[0,2]] := CC4.4^2*CC4.2;
-  P3mons[[1,3]] := CC4.4^2*CC4.1;
-  P3mons[[2,3]] := CC4.1^2*CC4.4;
-  P3mons[[1,0]] := CC4.2^2*CC4.3;
-  P3mons[[2,0]] := CC4.3^2*CC4.2;
-  P3mons[[2,1]] :=CC4.3^2 * CC4.4;
-  P3mons[[2,2]] := CC4.1^2 * CC4.2;
-  P3mons[[1,1]] := CC4.2^2 * CC4.1;
-  P3mons[[1,2]] := CC4.4^2 * CC4.3;
-
-  xy[[3,3]] := Sqrt(MonomialCoefficient(f, x1^6*y1^6));
-  xy[[3,0]] := Sqrt(MonomialCoefficient(f, x1^6*y2^6));
-  xy[[0,3]] := Sqrt(MonomialCoefficient(f, x2^6*y1^6));
-  xy[[0,0]] := Sqrt(MonomialCoefficient(f, x2^6*y2^6));
-
-  max:= 0;
-  start := [];
-  for i in Keys(xy) do
-    absval := Abs(xy[i]);
-    if absval gt max then
-      max := absval;
-      start := i;
-    end if;
-  end for;
-
-  hstep := 1;
-  vstep := 1;
-
-  if start[1] gt 0 then
-    hstep := -1;
-  end if;
-
-  if start[2] gt 0 then
-    vstep := -1;
-  end if;
-
-  for i in [0..3] do
-    for j in [0..3] do
-      if i eq 0 and j eq 0 then
-        continue;
-      end if;
-      n1 := start[1] + hstep * i; n2 := 3 - n1;
-      n3 := start[2] + vstep * j; n4 := 3 - n3;
-      mon := MonomialCoefficient(f, x1^(start[1] +n1)*x2^(3 - start[1] + n2) * y1^(start[2] + n3)*y2^(3 - start[2] + n4));
-      rect := &cat[[[[start[1] + hstep * mu,start[2] + vstep * nu], [start[1] + hstep * (i - mu),start[2] + vstep * (j - nu)]]  : mu in [0..i] | (mu ne 0 or nu ne 0) and (mu ne i or nu ne j)] : nu in [0..j]];
-      print "i =", i, "j=", j, "coords ", n1, n3, "\n";
-      print rect;
-      print x1^(start[1] +n1)*x2^(3 - start[1] + n2) * y1^(start[2] + n3)*y2^(3 - start[2] + n4), "\n";
-    
-      subtractsum := &+([xy[tup[1]] * xy[tup[2]] : tup in rect] cat [CC!0]);
-      xy[[n1,n3]] := ((mon - subtractsum  )/xy[start])/2;
-    end for;
-  end for;
-
-  sqrt:= P1P1!0;
-  SegreCubic := CC4!0;
-
-  for i in [0..3] do
-    for j in [0..3] do
-      sqrt +:= xy[[i,j]] *x1^i*x2^(3-i)*y1^j*y2^(3-j);
-      SegreCubic +:= xy[[i,j]] * P3mons[[i,j]];
-    end for;
-  end for;
-
-  v:=Matrix(CC4, [[CC4.1, CC4.2, CC4.3, CC4.4]]);
-
-  //Apply coordinate transformation to detqdual
+  //Reverse the coordinate transformation
   cubic := Evaluate(SegreCubic, Eltseq((v * ChangeRing(QtoSegre^(-1), CC4))[1]));
   
   return Qnew, cubic;
