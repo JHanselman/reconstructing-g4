@@ -149,7 +149,33 @@ function RiemannModelFromModuli(mods);
   u3:=u3[1]*x1+u3[2]*x2+u3[3]*x3;
   return (x1*u1+x2*u2-x3*u3)^2-4*x1*u1*x2*u2, u1, u2, u3;
 end function;
+/* Testing
+bit := ComputeBitangents(tau);
+for j in [1..28] do
+  print j;
+  L := &+[bit[j][i] * R.i : i in [1..3]];
+  res := Resultant(quartic, L, 1);
+  rr := Evaluate(res, [0,t,1]);
+  print Roots(rr), "\n";
+end for;
 
+function TritangentPlane(Pi, char)
+  CC := BaseRing(Pi);
+  prec := Precision(CC);
+  Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
+  tau := Pi1^-1*Pi2;
+  g := Nrows(tau);
+  cs := [];
+  for i := 1 to g do
+    dz := [0,0,0];
+    dz[i] := 1;
+    Append(~cs, Theta([CC | 0,0,0], tau : char := char, dz := [dz], prec := prec));
+  end for;
+  cs := Eltseq(Matrix(1,g,cs)*(Pi1^-1));
+  //cs := [cs[i]/cs[g] : i in [1..g]];
+  return cs;
+end function;
+*/
 function ComputeBitangents(thetas)
 
   CC := Parent(thetas[1]);
@@ -173,15 +199,16 @@ function ComputeBitangents(thetas)
   g3thetas:=correct_signs(g3thetas);
   mods := ModuliFromTheta(g3thetas);
 
-  A := Matrix(3,3,[1/el : el in mods]);
-  Ainv:=A^-1;
+  A := Transpose(Matrix(3,3,[1/el : el in mods]));
+  Ainv := A^-1;
   lambdas := Ainv*Matrix(3,1,[BaseRing(Parent(Ainv)) | -1,-1,-1]);
 
   mods_mat := [[mods[i], mods[i+1], mods[i+2]] : i in [1,4,7]];
-  L:=DiagonalMatrix(Eltseq(lambdas));
-  B := Matrix(3,3,mods)*L;
+  L := DiagonalMatrix(Eltseq(lambdas));
+  B := Transpose(Matrix(3,3, mods))*L;
   Binv := Inverse(B);
-  ks:=Binv*Matrix(3,1,[BaseRing(Parent(Binv)) | -1,-1,-1]);
+  ks := Binv*Matrix(3,1,[BaseRing(Parent(Binv)) | -1,-1,-1]);
+  print ks;
   bitangents := [];
   bitangents := [ [CC | 1, 0, 0], [CC | 0,1,0], [CC | 0,0,1], [CC | 1,1,1]];
   bitangents cat:= mods_mat;
@@ -189,7 +216,7 @@ function ComputeBitangents(thetas)
   bitangents cat:= [Coefficients(el) : el in [u0, u1, u2]];
   CC3<t0,t1,t2> := Parent(u0);
   bitangents cat:= [Coefficients(el) : el in [t0+t1+u2, t0+u1+t2, u0+t1+t2]];
-
+  mods_mat := Transpose(Matrix(mods_mat));
 // (3)
   for i := 1 to 3 do
     new := u0/mods_mat[1,1] + ks[i,1]*(mods_mat[2,i]*t1 + mods_mat[3,i]*t2);
