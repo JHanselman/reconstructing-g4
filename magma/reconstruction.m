@@ -150,7 +150,31 @@ function RiemannModelFromModuli(mods);
   return (x1*u1+x2*u2-x3*u3)^2-4*x1*u1*x2*u2, u1, u2, u3;
 end function;
 /* Testing
-bit := ComputeBitangents(tau);
+CC := Parent(thetas[1]);
+chars_even := EvenThetaCharacteristics(3);
+g3thetas := [];
+for i := 1 to 64 do
+  s := Intseq(i mod 64,2,6);
+  s := Reverse(s);   delta := [s[1..3], s[4..6]];
+  if delta in chars_even then
+    print delta;
+    delta_new1 := [[0] cat el : el in delta];
+    delta_new2 := [[0] cat delta[1], [1] cat delta[2]];
+    // formula from Lemma 1 (p. 148) of Farkas
+    g3thetas[i] := Sqrt(thetas[TCharToIndex(delta_new1)]*thetas[TCharToIndex(\
+delta_new2)]);
+  else
+   Append(~g3thetas, 0);
+  end if;
+end for;
+g3thetas:=correct_signs(g3thetas);
+mods := ModuliFromTheta(g3thetas);
+quartic := RiemannModelFromModuli(mods);
+
+R:= Parent(quartic);
+W<t> := PolynomialRing(CC);
+
+bit := ComputeBitangents(thetas);
 for j in [1..28] do
   print j;
   L := &+[bit[j][i] * R.i : i in [1..3]];
@@ -219,17 +243,17 @@ function ComputeBitangents(thetas)
   mods_mat := Transpose(Matrix(mods_mat));
 // (3)
   for i := 1 to 3 do
-    new := u0/mods_mat[1,1] + ks[i,1]*(mods_mat[2,i]*t1 + mods_mat[3,i]*t2);
+    new := u0/mods_mat[1,i] + ks[i,1]*(mods_mat[2,i]*t1 + mods_mat[3,i]*t2);
     Append(~bitangents, Coefficients(new));
   end for;
 // (4)
   for i := 1 to 3 do
-    new := u1/mods_mat[2,1] + ks[i,1]*(mods_mat[1,i]*t0 + mods_mat[3,i]*t2);
+    new := u1/mods_mat[2,i] + ks[i,1]*(mods_mat[1,i]*t0 + mods_mat[3,i]*t2);
     Append(~bitangents, Coefficients(new));
   end for;
 // (5)
   for i := 1 to 3 do
-    new := u2/mods_mat[3,1] + ks[i,1]*(mods_mat[1,i]*t0 + mods_mat[2,i]*t1);
+    new := u2/mods_mat[3,i] + ks[i,1]*(mods_mat[1,i]*t0 + mods_mat[2,i]*t1);
     Append(~bitangents, Coefficients(new));
   end for;
 // (6)
@@ -237,6 +261,7 @@ function ComputeBitangents(thetas)
     new := u0/(1-ks[i,1]*mods_mat[2,i]*mods_mat[3,i]) + u1/(1-ks[i,1]*mods_mat[1,i]*mods_mat[3,i]) + u2/(1-ks[i,1]*mods_mat[1,i]*mods_mat[2,i]);
     Append(~bitangents, Coefficients(new));
   end for;
+// (7)
   for i := 1 to 3 do
     new := u0/(mods_mat[1,i]*(1-ks[i,1]*mods_mat[2,i]*mods_mat[3,i])) + u1/(mods_mat[2,i]*(1-ks[i,1]*mods_mat[1,i]*mods_mat[3,i])) + u2/(mods_mat[3,i]*(1-ks[i,1]*mods_mat[1,i]*mods_mat[2,i]));
     Append(~bitangents, Coefficients(new));
