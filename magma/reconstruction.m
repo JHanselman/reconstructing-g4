@@ -45,7 +45,7 @@ function ComputeThetas(tau)
         thetas[i] := CC!0;
     end if;
   end for;
-  thetas[2^(2*g)] := Theta([CC!0 : i in [1..g]], tau : char := [[0,0,0,0],[0,0,0,0]]);  
+  thetas[2^(2*g)] := Theta([CC!0 : i in [1..g]], tau : char := [[0: i in [1..g]],[0: i in [1..g]]]);  
   return thetas;
 end function;
 
@@ -191,9 +191,9 @@ function TritangentPlane(Pi, char)
   g := Nrows(tau);
   cs := [];
   for i := 1 to g do
-    dz := [0,0,0];
+     dz := [0: i in [1..g]];
     dz[i] := 1;
-    Append(~cs, Theta([CC | 0,0,0], tau : char := char, dz := [dz], prec := prec));
+    Append(~cs, Theta([CC | 0: i in [1..g]], tau : char := char, dz := [dz], prec := prec));
   end for;
   cs := Eltseq(Matrix(1,g,cs)*(Pi1^-1));
   //cs := [cs[i]/cs[g] : i in [1..g]];
@@ -257,10 +257,26 @@ function ComputeBitangents(thetas)
     Append(~bitangents, Coefficients(new));
   end for;
 // (6)
-  for i := 1 to 3 do
-    new := u0/(1-ks[i,1]*mods_mat[2,i]*mods_mat[3,i]) + u1/(1-ks[i,1]*mods_mat[1,i]*mods_mat[3,i]) + u2/(1-ks[i,1]*mods_mat[1,i]*mods_mat[2,i]);
-    Append(~bitangents, Coefficients(new));
-  end for;
+  modsinv:=Inverse(mods_mat);
+  modstra:= Transpose(DiagonalMatrix([1/el: el in  Eltseq(modsinv*Matrix(CC,3,1,[1,1,1]))])*modsinv);
+  Atra := Transpose(Matrix(3,3,[1/el : el in Eltseq(modstra)]));
+  Ainvtra := Atra^-1;
+  lambdastra := Ainvtra*Matrix(3,1,[BaseRing(Parent(Ainv)) | -1,-1,-1]);
+  Ltra := DiagonalMatrix(Eltseq(lambdastra));
+  Btra := Transpose(modstra)*Ltra;
+  Binvtra := Inverse(Btra);
+  kstra := Binvtra*Matrix(3,1,[BaseRing(Parent(Binv)) | -1,-1,-1]);
+  k:=kstra[1,1];
+  kp:=kstra[2,1];
+
+  M:=Matrix([[1,1,1],Eltseq(k*modstra[1]),Eltseq(kp*modstra[2])]);
+  Mb:=Matrix([[1,1,1],Eltseq(Transpose(Atra)[1]),Eltseq(Transpose(Atra)[2])]);
+  U:=-Mb^(-1)*M;
+  u1tra:=U[1]*Inverse(modstra);
+  u2tra:=U[2]*Inverse(modstra);
+  u3tra:=U[3]*Inverse(modstra);
+
+  bitangents cat:= [Eltseq(el) : el in [u1tra, u2tra, u3tra]];
 // (7)
   for i := 1 to 3 do
     new := u0/(mods_mat[1,i]*(1-ks[i,1]*mods_mat[2,i]*mods_mat[3,i])) + u1/(mods_mat[2,i]*(1-ks[i,1]*mods_mat[1,i]*mods_mat[3,i])) + u2/(mods_mat[3,i]*(1-ks[i,1]*mods_mat[1,i]*mods_mat[2,i]));
@@ -273,7 +289,7 @@ end function;
 
 function ComputeSquareRootOnP1xP1(detqdualonsegre)
 
-  CC := BaseRing(detqdualonsegre);
+  CC := BaseRing(Parent(detqdualonsegre));
   CC4:=PolynomialRing(CC,4);
   P1P1<x1,x2,y1,y2> := PolynomialRing(CC,4);
   x:=[x1,x2];
@@ -357,7 +373,7 @@ function ComputeSquareRootOnP1xP1(detqdualonsegre)
       SegreCubic +:= xy[[i,j]] * P3mons[[i,j]];
     end for;
   end for;
-
+  return SegreCubic;
 end function;
 
 function ComputeCurve(bitangents, tritangents)
@@ -447,17 +463,19 @@ function ComputeCurve(bitangents, tritangents)
 
   //Reverse the coordinate transformation
   cubic := Evaluate(SegreCubic, Eltseq((v * ChangeRing(QtoSegre^(-1), CC4))[1]));
-  
-  return Qnew, cubic;
+  quadric:=(v*ChangeRing(quadric, CC4) *Transpose(v))[1,1];
+  return quadric, cubic;
+
+
 end function;
 
-intrinsic ReconstructCurveG4(tau::AlgMatElt) -> Crv
+intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
 {}
   g := Nrows(tau);
   thetas := ComputeThetas(tau);
   tritangents := ComputeTritangents(thetas);
   bitangents := ComputeBitangents(thetas);
-  quadric, cubic := ComputeCurve(bitangents, tritangents);
-
+  quadric, cubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
+  return [quadric, cubic];
 end intrinsic;
 
