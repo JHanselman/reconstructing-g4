@@ -29,7 +29,7 @@ intrinsic TCharToIndex(chara::SeqEnum) -> RngIntElt
   g := #eps;
   assert #delta eq g;
   
-  sum := &+[(ZZ!eps[i])*2^(g + i-1) : i in [1..g]] + &+[(ZZ!delta[i])*2^(i-1) : i in [1..g]];
+  sum := &+[(ZZ!eps[i] mod 2)*2^(g + i-1) : i in [1..g]] + &+[(ZZ!delta[i] mod 2)*2^(i-1) : i in [1..g]];
   if sum ne 0 then
     return sum;
   else

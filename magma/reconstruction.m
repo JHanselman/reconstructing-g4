@@ -32,7 +32,8 @@ function NormalForm(A)
 	return ret;
 end function;
 
-function ComputeThetas(tau)
+intrinsic ComputeThetas(tau::AlgMatElt) -> SeqEnum
+{}
   CC := BaseRing(tau);
   g := Nrows(tau);
   thetas :=[];
@@ -47,7 +48,7 @@ function ComputeThetas(tau)
   end for;
   thetas[2^(2*g)] := Theta([CC!0 : i in [1..g]], tau : char := [[0: i in [1..g]],[0: i in [1..g]]]);  
   return thetas;
-end function;
+end intrinsic;
 
 function ComputeTritangents(thetas)
 
@@ -210,7 +211,6 @@ function ComputeBitangents(thetas)
     s := Reverse(s);
     delta := [s[1..3], s[4..6]];
     if delta in chars_even then
-      print delta;
       delta_new1 := [[0] cat el : el in delta];
       delta_new2 := [[0] cat delta[1], [1] cat delta[2]];
     // formula from Lemma 1 (p. 148) of Farkas
@@ -232,7 +232,6 @@ function ComputeBitangents(thetas)
   B := Transpose(Matrix(3,3, mods))*L;
   Binv := Inverse(B);
   ks := Binv*Matrix(3,1,[BaseRing(Parent(Binv)) | -1,-1,-1]);
-  print ks;
   bitangents := [];
   bitangents := [ [CC | 1, 0, 0], [CC | 0,1,0], [CC | 0,0,1], [CC | 1,1,1]];
   bitangents cat:= mods_mat;
@@ -355,10 +354,6 @@ function ComputeSquareRootOnP1xP1(detqdualonsegre)
       n3 := start[2] + vstep * j; n4 := 3 - n3;
       mon := MonomialCoefficient(f, x1^(start[1] +n1)*x2^(3 - start[1] + n2) * y1^(start[2] + n3)*y2^(3 - start[2] + n4));
       rect := &cat[[[[start[1] + hstep * mu,start[2] + vstep * nu], [start[1] + hstep * (i - mu),start[2] + vstep * (j - nu)]]  : mu in [0..i] | (mu ne 0 or nu ne 0) and (mu ne i or nu ne j)] : nu in [0..j]];
-      print "i =", i, "j=", j, "coords ", n1, n3, "\n";
-      print rect;
-      print x1^(start[1] +n1)*x2^(3 - start[1] + n2) * y1^(start[2] + n3)*y2^(3 - start[2] + n4), "\n";
-    
       subtractsum := &+([xy[tup[1]] * xy[tup[2]] : tup in rect] cat [CC!0]);
       xy[[n1,n3]] := ((mon - subtractsum  )/xy[start])/2;
     end for;
@@ -463,7 +458,7 @@ function ComputeCurve(bitangents, tritangents)
 
   //Reverse the coordinate transformation
   cubic := Evaluate(SegreCubic, Eltseq((v * ChangeRing(QtoSegre^(-1), CC4))[1]));
-  quadric:=(v*ChangeRing(quadric, CC4) *Transpose(v))[1,1];
+  quadric:=(v*ChangeRing(Qnew, CC4) *Transpose(v))[1,1];
   return quadric, cubic;
 
 

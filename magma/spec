@@ -2,6 +2,7 @@
   auxiliary.m
   azygetic.m
   reconstruction.m
+  rosenhain.m
   signs.m
   theta.m
 }
