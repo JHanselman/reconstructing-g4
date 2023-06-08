@@ -1,6 +1,6 @@
 AttachSpec("../magma/spec");
 SetDebugOnError(true);
-
+SetVerbose("User1", 1);
 ZZ:=Integers();
 prec := 40;
 SetDefaultRealFieldPrecision(prec);
@@ -17,7 +17,7 @@ mons2:=MonomialsOfDegree(R,2);
 mons3:=MonomialsOfDegree(R,3);
 
 
-Q:= 4*x^2 + 6*x*z + 8*x*w + y^2 + y*z + 3*y*w - 10*z^2 - 9*z*w - 10*w^2
+Q:= 4*x^2 + 6*x*z + 8*x*w + y^2 + y*z + 3*y*w - 10*z^2 - 9*z*w - 10*w^2;
 F:=5*x^3 - 3*x^2*y - 8*x^2*z + 3*x^2*w + x*y^2 + 4*x*y*z - 6*x*y*w + 4*x*z^2 +
     3*x*z*w + 7*x*w^2 - y^3 - 6*y^2*z + 10*y^2*w + 8*y*z^2 - 4*y*z*w + 3*y*w^2 -
     9*z^3 - 10*z^2*w - z*w^2 + 6*w^3;

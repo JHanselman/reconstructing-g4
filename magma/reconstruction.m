@@ -403,20 +403,24 @@ function ComputeCurve(bitangents, tritangents)
   
   N:=HorizontalJoin([  DiagonalMatrix(Eltseq(vi[i]))*fsq_mat : i in [1..Nrows(vi) ]]);
   //TODO: Check singular values to see if rank is too small. If so then compute more tritangents.
-
-
+  DN:=SingularValueDecomposition(N);
   gammaiinv:=NumericalKernel(N: Epsilon:=RR!(10^(-15)));
-  D, U, V:=SingularValueDecomposition(Xnew);
+  
+  DXnew, U, V:=SingularValueDecomposition(Xnew);
   Upart:=Matrix(U[1..7]);
   phi:=Upart*DiagonalMatrix(Eltseq(gammaiinv))*fsq_mat;
 
   //Kernel is not deterministic
+  
   Qpre:=Kernel(phi);
   Qpre1:=Qpre*Upart;
   Qnew:=&+[Eltseq(Basis(Qpre1)[1])[i]*mats1new[i]: i in [1..r] ];
   dualelt:=mats1newx*ChangeRing(Transpose(Upart), CC4);
   
   D, U, V:=SingularValueDecomposition(phi);
+  if IsVerbose("User1", 1) then
+	print "SVs of Xnew=", Diagonal(DXnew), "\n SVs of N=", Diagonal(DN);
+  end if;
   phiext:=HorizontalJoin(phi, Matrix(7,1, Eltseq(Conjugate(U)[7])));
   phiTinv:=ChangeRing(Transpose(phiext)^(-1), CC4);
   phiL:=dualelt*phiTinv;
@@ -455,6 +459,8 @@ function ComputeCurve(bitangents, tritangents)
   
   //Pull back to P1 x P1 and take the square root there
   SegreCubic := ComputeSquareRootOnP1xP1(detqdualonsegre);
+ 
+
 
   //Reverse the coordinate transformation
   cubic := Evaluate(SegreCubic, Eltseq((v * ChangeRing(QtoSegre^(-1), CC4))[1]));

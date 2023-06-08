@@ -1,6 +1,7 @@
 AttachSpec("../magma/spec");
 SetDebugOnError(true);
-SetOutputFile("reconstruction-test.txt");
+SetOutputFile("reconstruction-test-invs.txt");
+load "../../Invariants_genus_4.m";
 ZZ:=Integers();
 prec := 30;
 SetDefaultRealFieldPrecision(prec);
@@ -39,32 +40,21 @@ Equ:=ReconstructCurveG4(tau);
 quadric:=Equ[1];
 cubic:=Equ[2];
 CC4:=Parent(quadric);
-CC1<t>:=PolynomialRing(CC);
-X:=Matrix(CC4, 4,1, [CC4.i: i in [1..4]]);
+f1 := new_cubic(quadric,cubic);
+f2:=new_cubic(CC4!Q, CC4!F);
 
-TTB:=[];
 
-for c in tritangentbasis do
-  chara := [ZZ!v : v in Eltseq(c)];
-  chara := [chara[1..4], chara[5..8]];
-  Append(~TTB, TritangentPlane(Pi_big, chara));
+f1 := Evaluate(f1, [CC4.1*CC4.3  , CC4.2*CC4.3, CC4.1*CC4.4, CC4.2*CC4.4]);
+f2 := Evaluate(f2, [CC4.1*CC4.3  , CC4.2*CC4.3, CC4.1*CC4.4, CC4.2*CC4.4]);
+
+I1 := eval_inv(list_invariants, f1);
+I2 := eval_inv(list_invariants, f2);
+J1, J2 := same_wps(list_invariants, I1, I2);
+for i in [1..#J1] do
+	print Abs(J1[i]-J2[i]);
 end for;
 
-TtoS := Matrix(TTB[1..4]);
-D := DiagonalMatrix(Eltseq(Vector(TTB[5]) * (TtoS)^-1));
-M := TtoS^-1 * D^-1;
 
-
-Ccan, map:=CanonicalImage(S);
-Cplane:=Domain(map);
-
-for i in [-10..-1] cat [1..10] do
-        f1:=Evaluate(DefiningEquation(Cplane), [1/CC!i+CC.1, t]);
-        ys:=[roo[1]: roo in Roots(f1)];
-        coord:=[[Evaluate(DefiningEquations(map)[nu], [1/CC!i+CC.1, y]) : nu in [1..4]  ]: y in ys];
-        print [Abs(Evaluate( (Transpose(X)*ChangeRing(quadric, CC4) *X)[1,1], Eltseq(Vector(coo)*Transpose(Inverse(M))) )): coo in coord];
-        print [Abs(Evaluate( (Transpose(X)*ChangeRing(cubic, CC4) *X)[1,1], Eltseq(Vector(coo)*Transpose(Inverse(M))) )): coo in coord];
-end for;
 
 end for;
 
