@@ -1,4 +1,6 @@
 AttachSpec("../magma/spec");
+load "../../Invariants_genus_4.m";
+T:=Time();
 SetDebugOnError(true);
 SetVerbose("User1", 1);
 ZZ:=Integers();
@@ -6,23 +8,10 @@ prec := 40;
 SetDefaultRealFieldPrecision(prec);
 QQ:=Rationals();
 R<x,y,z,w> := PolynomialRing(QQ,4);
-
-tritangentbasis := [
-    [GF(2)|1, 1, 1, 0, 1, 1, 1, 0],
-    [GF(2)|1, 0, 1, 0, 0, 0, 1, 0],
-    [GF(2)|1, 1, 1, 0, 0, 0, 1, 0],
-    [GF(2)|1, 0, 1, 0, 0, 1, 1, 0],
-    [GF(2)|0, 1, 1, 0, 0, 1, 0, 0]];
-mons2:=MonomialsOfDegree(R,2);
-mons3:=MonomialsOfDegree(R,3);
-
-
-Q:= 4*x^2 + 6*x*z + 8*x*w + y^2 + y*z + 3*y*w - 10*z^2 - 9*z*w - 10*w^2;
-F:=5*x^3 - 3*x^2*y - 8*x^2*z + 3*x^2*w + x*y^2 + 4*x*y*z - 6*x*y*w + 4*x*z^2 +
-    3*x*z*w + 7*x*w^2 - y^3 - 6*y^2*z + 10*y^2*w + 8*y*z^2 - 4*y*z*w + 3*y*w^2 -
-    9*z^3 - 10*z^2*w - z*w^2 + 6*w^3;
-
-
+Q:=-10*x^2 - x*y + 8*x*z + 3*x*w - 9*y*z + y*w - 6*z^2 - 5*z*w - 5*w^2;
+F:=-x^2*y - x^2*z - 5*x^2*w - 6*x*y^2 - 2*x*y*z - 9*x*y*w + 7*x*z^2 + 3*x*z*w -
+    8*x*w^2 - 10*y^3 + 3*y^2*z - y^2*w - 3*y*z^2 - 7*y*w^2 - z^3 + z^2*w -
+    10*z*w^2 + 3*w^3;
 C := Curve(Proj(R),[F,Q]);
 print C;
 R2<u,v> := PolynomialRing(QQ,2);
@@ -41,30 +30,49 @@ Equ:=ReconstructCurveG4(tau);
 quadric:=Equ[1];
 cubic:=Equ[2];
 CC4:=Parent(quadric);
-CC1<t>:=PolynomialRing(CC);
-X:=Matrix(CC4, 4,1, [CC4.i: i in [1..4]]);
+f1 := new_cubic(quadric,cubic);
+f2:=new_cubic(CC4!Q, CC4!F);
 
-TTB:=[];
+f1 := Evaluate(f1, [CC4.1*CC4.3  , CC4.2*CC4.3, CC4.1*CC4.4, CC4.2*CC4.4]);
+f2 := Evaluate(f2, [CC4.1*CC4.3  , CC4.2*CC4.3, CC4.1*CC4.4, CC4.2*CC4.4]);
 
-for c in tritangentbasis do
-  chara := [ZZ!v : v in Eltseq(c)];
-  chara := [chara[1..4], chara[5..8]];
-  Append(~TTB, TritangentPlane(Pi_big, chara));
+I1 := eval_inv(list_invariants, f1);
+I2 := eval_inv(list_invariants, f2);
+J1, J2 := same_wps(list_invariants, I1, I2);
+for i in [1..#J1] do
+        print Abs(J1[i]-J2[i]);
 end for;
+Time(T);
 
 
-TtoS := Matrix(TTB[1..4]);
-D := DiagonalMatrix(Eltseq(Vector(TTB[5]) * (TtoS)^-1));
-M := TtoS^-1 * D^-1;
 
 
-Ccan, map:=CanonicalImage(S);
-Cplane:=Domain(map);
 
-for i in [-10..-1] cat [1..10] do
-        f1:=Evaluate(DefiningEquation(Cplane), [1/CC!i+CC.1, t]);
-        ys:=[roo[1]: roo in Roots(f1)];
-        coord:=[[Evaluate(DefiningEquations(map)[nu], [1/CC!i+CC.1, y]) : nu in [1..4]  ]: y in ys];
-        print [Abs(Evaluate( (Transpose(X)*ChangeRing(quadric, CC4) *X)[1,1], Eltseq(Vector(coo)*Transpose(Inverse(M))) )): coo in coord];
-        print [Abs(Evaluate( (Transpose(X)*ChangeRing(cubic, CC4) *X)[1,1], Eltseq(Vector(coo)*Transpose(Inverse(M))) )): coo in coord];
-end for;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

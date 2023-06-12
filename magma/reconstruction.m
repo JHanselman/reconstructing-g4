@@ -90,8 +90,11 @@ function ComputeTritangents(thetas)
       T2 *:= thetas[TCharToIndex([ss[1..4],ss[5..8]])];
     end for;
      constant[k] := signs[1]*T1 + signs[2]*T2;
-  end for;
+     if IsVerbose("User1",1) then
+        print "precision loss in constant=", Abs(constant[k]/T1);
+  end if;
 
+  end for;
   for i in [1..10] do
     for j in [1..2] do
       for k in [1..4] do
@@ -111,6 +114,10 @@ function ComputeTritangents(thetas)
         end for;
 
         tritangents[i][j][k] := (signs[1]*T1 + signs[2]*T2)/constant[k];
+	if IsVerbose("User1",1) then
+              print "precision loss in numerator of JDF=", Abs((signs[1]*T1 + signs[2]*T2)/T1);
+        end if;
+
       end for;
     end for;
   end for;
@@ -239,21 +246,35 @@ function ComputeBitangents(thetas)
   bitangents cat:= [Coefficients(el) : el in [u0, u1, u2]];
   CC3<t0,t1,t2> := Parent(u0);
   bitangents cat:= [Coefficients(el) : el in [t0+t1+u2, t0+u1+t2, u0+t1+t2]];
+  if IsVerbose("User1",1) then
+     print "precision loss in bitangent comp=", [[Abs(bitangents[8][i]/bitangents[7][i]), Abs(bitangents[9][i]/bitangents[6][i]),Abs(bitangents[10][i]/bitangents[5][i])]: i in [1..3]];
+  end if;
   mods_mat := Transpose(Matrix(mods_mat));
 // (3)
   for i := 1 to 3 do
     new := u0/mods_mat[1,i] + ks[i,1]*(mods_mat[2,i]*t1 + mods_mat[3,i]*t2);
     Append(~bitangents, Coefficients(new));
+    if IsVerbose("User1",1) then
+      print "precision loss in bitangent comp=",  [[Abs(mods_mat[1,i]*bitangents[10+i][nu]/bitangents[5][nu])]: nu in [1..3]];
+    end if;
   end for;
 // (4)
   for i := 1 to 3 do
     new := u1/mods_mat[2,i] + ks[i,1]*(mods_mat[1,i]*t0 + mods_mat[3,i]*t2);
     Append(~bitangents, Coefficients(new));
+    if IsVerbose("User1",1) then
+       print "precision loss in bitangent comp=",  [[Abs(mods_mat[2,i]*bitangents[13+i][nu]/bitangents[6][nu])]: nu in [1..3]];
+    end if;
+
   end for;
 // (5)
   for i := 1 to 3 do
     new := u2/mods_mat[3,i] + ks[i,1]*(mods_mat[1,i]*t0 + mods_mat[2,i]*t1);
     Append(~bitangents, Coefficients(new));
+    if IsVerbose("User1",1) then
+      print "precision loss in bitangent comp=",  [[Abs(mods_mat[3,i]*bitangents[16+i][nu]/bitangents[7][nu])]: nu in [1..3]];
+    end if;
+
   end for;
 // (6)
   modsinv:=Inverse(mods_mat);
@@ -281,7 +302,16 @@ function ComputeBitangents(thetas)
     new := u0/(mods_mat[1,i]*(1-ks[i,1]*mods_mat[2,i]*mods_mat[3,i])) + u1/(mods_mat[2,i]*(1-ks[i,1]*mods_mat[1,i]*mods_mat[3,i])) + u2/(mods_mat[3,i]*(1-ks[i,1]*mods_mat[1,i]*mods_mat[2,i]));
     Append(~bitangents, Coefficients(new));
   end for;
-
+  if IsVerbose("User1",1) then
+      DA:=SingularValueDecomposition(A);
+      DB:=SingularValueDecomposition(B);
+      Dmods_mat:=SingularValueDecomposition(mods_mat);
+      Dmodstra:=SingularValueDecomposition(modstra);
+      DAtra:=SingularValueDecomposition(A);
+      DBtra:=SingularValueDecomposition(Btra);
+      DMb:=SingularValueDecomposition(Mb);
+      print "\n SVs of A", Diagonal(DA),"\n SVs of B", Diagonal(DB),"\n SVs of mods_mat", Diagonal(Dmods_mat),"\n SVs of modstra", Diagonal(Dmodstra),"\n SVs of Atra", Diagonal(DAtra),"\n SVs of Btra", Diagonal(DBtra),"\n SVs of Mb", Diagonal(DMb);
+  end if;
   return bitangents;
 
 end function;
@@ -333,7 +363,9 @@ function ComputeSquareRootOnP1xP1(detqdualonsegre)
       start := i;
     end if;
   end for;
-
+  if IsVerbose("User1",1) then
+       print "\n Absolute value of leading coeff of sqrt=", absval, "\n";
+  end if;
   hstep := 1;
   vstep := 1;
 
@@ -418,10 +450,15 @@ function ComputeCurve(bitangents, tritangents)
   dualelt:=mats1newx*ChangeRing(Transpose(Upart), CC4);
   
   D, U, V:=SingularValueDecomposition(phi);
-  if IsVerbose("User1", 1) then
-	print "SVs of Xnew=", Diagonal(DXnew), "\n SVs of N=", Diagonal(DN);
-  end if;
   phiext:=HorizontalJoin(phi, Matrix(7,1, Eltseq(Conjugate(U)[7])));
+  if IsVerbose("User1", 1) then
+        Dfsqmat:=SingularValueDecomposition(fsq_mat);
+        Dphiext:=SingularValueDecomposition(Transpose(phiext));
+
+        print "SVs of fsq_mat", Diagonal(Dfsqmat),"\n SVs of Xnew=", Diagonal(DXnew), "\n SVs of N=", Diagonal(DN), "\n SVs of phi=", Diagonal(D), "\n SVs of phiext=", Diagonal(Dphiext);
+  end if;
+
+
   phiTinv:=ChangeRing(Transpose(phiext)^(-1), CC4);
   phiL:=dualelt*phiTinv;
   qdual:=ZeroMatrix(CC4, 3,3);
@@ -476,6 +513,10 @@ intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
   thetas := ComputeThetas(tau);
   tritangents := ComputeTritangents(thetas);
   bitangents := ComputeBitangents(thetas);
+  if IsVerbose("User1", 1) then
+    print "\n tritangents:", tritangents;
+    print "\n bitangents:", bitangents;
+  end if;
   quadric, cubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
   return [quadric, cubic];
 end intrinsic;

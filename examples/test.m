@@ -8,12 +8,6 @@ SetDefaultRealFieldPrecision(prec);
 QQ:=Rationals();
 R<x,y,z,w> := PolynomialRing(QQ,4);
 
-tritangentbasis := [
-    [GF(2)|1, 1, 1, 0, 1, 1, 1, 0],
-    [GF(2)|1, 0, 1, 0, 0, 0, 1, 0],
-    [GF(2)|1, 1, 1, 0, 0, 0, 1, 0],
-    [GF(2)|1, 0, 1, 0, 0, 1, 1, 0],
-    [GF(2)|0, 1, 1, 0, 0, 1, 0, 0]];
 mons2:=MonomialsOfDegree(R,2);
 mons3:=MonomialsOfDegree(R,3);
 
@@ -51,7 +45,7 @@ I1 := eval_inv(list_invariants, f1);
 I2 := eval_inv(list_invariants, f2);
 J1, J2 := same_wps(list_invariants, I1, I2);
 for i in [1..#J1] do
-	print Abs(J1[i]-J2[i]);
+	print Abs(J1[i]-J2[i]), Abs(J1[i]);
 end for;
 
 
