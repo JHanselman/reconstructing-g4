@@ -208,7 +208,8 @@ function TritangentPlane(Pi, char)
   return cs;
 end function;
 */
-function ComputeBitangents(thetas)
+intrinsic ComputeBitangents(thetas::SeqEnum) -> SeqEnum
+  {}
 
   CC := Parent(thetas[1]);
   chars_even := EvenThetaCharacteristics(3);
@@ -229,16 +230,8 @@ function ComputeBitangents(thetas)
   
   g3thetas:=correct_signs(g3thetas);
   mods := ModuliFromTheta(g3thetas);
-
-  A := Transpose(Matrix(3,3,[1/el : el in mods]));
-  Ainv := A^-1;
-  lambdas := Ainv*Matrix(3,1,[BaseRing(Parent(Ainv)) | -1,-1,-1]);
-
   mods_mat := [[mods[i], mods[i+1], mods[i+2]] : i in [1,4,7]];
-  L := DiagonalMatrix(Eltseq(lambdas));
-  B := Transpose(Matrix(3,3, mods))*L;
-  Binv := Inverse(B);
-  ks := Binv*Matrix(3,1,[BaseRing(Parent(Binv)) | -1,-1,-1]);
+  ks := Matrix(CC, 3, 1, [1,1,1]);
   bitangents := [];
   bitangents := [ [CC | 1, 0, 0], [CC | 0,1,0], [CC | 0,0,1], [CC | 1,1,1]];
   bitangents cat:= mods_mat;
@@ -272,22 +265,22 @@ function ComputeBitangents(thetas)
     new := u2/mods_mat[3,i] + ks[i,1]*(mods_mat[1,i]*t0 + mods_mat[2,i]*t1);
     Append(~bitangents, Coefficients(new));
     if IsVerbose("User1",1) then
-      print "precision loss in bitangent comp=",  [[Abs(mods_mat[3,i]*bitangents[16+i][nu]/bitangents[7][nu])]: nu in [1..3]];
+      print "precision loss in bitangent comp=", [[Abs(mods_mat[3,i]*bitangents[16+i][nu]/bitangents[7][nu])]: nu in [1..3]];
     end if;
 
   end for;
 // (6)
   modsinv:=Inverse(mods_mat);
-  modstra:= Transpose(DiagonalMatrix([1/el: el in  Eltseq(modsinv*Matrix(CC,3,1,[1,1,1]))])*modsinv);
+  D := DiagonalMatrix([1/el: el in Eltseq(modsinv*Matrix(CC,3,1,[1,1,1]))]);
+  modstra:= Transpose(D*modsinv);
   Atra := Transpose(Matrix(3,3,[1/el : el in Eltseq(modstra)]));
-  Ainvtra := Atra^-1;
-  lambdastra := Ainvtra*Matrix(3,1,[BaseRing(Parent(Ainv)) | -1,-1,-1]);
+  lambdastra := Solution(Transpose(Atra), Vector([BaseRing(Parent(Atra)) | -1,-1,-1]));
   Ltra := DiagonalMatrix(Eltseq(lambdastra));
   Btra := Transpose(modstra)*Ltra;
-  Binvtra := Inverse(Btra);
-  kstra := Binvtra*Matrix(3,1,[BaseRing(Parent(Binv)) | -1,-1,-1]);
-  k:=kstra[1,1];
-  kp:=kstra[2,1];
+  kstra := Solution(Transpose(Btra), Vector([BaseRing(Parent(Btra)) | -1,-1,-1]));
+  printf "kstra = %o\n", kstra;
+  k:=kstra[1];
+  kp:=kstra[2];
 
   M:=Matrix([[1,1,1],Eltseq(k*modstra[1]),Eltseq(kp*modstra[2])]);
   Mb:=Matrix([[1,1,1],Eltseq(Transpose(Atra)[1]),Eltseq(Transpose(Atra)[2])]);
@@ -302,6 +295,7 @@ function ComputeBitangents(thetas)
     new := u0/(mods_mat[1,i]*(1-ks[i,1]*mods_mat[2,i]*mods_mat[3,i])) + u1/(mods_mat[2,i]*(1-ks[i,1]*mods_mat[1,i]*mods_mat[3,i])) + u2/(mods_mat[3,i]*(1-ks[i,1]*mods_mat[1,i]*mods_mat[2,i]));
     Append(~bitangents, Coefficients(new));
   end for;
+  /*
   if IsVerbose("User1",1) then
       DA:=SingularValueDecomposition(A);
       DB:=SingularValueDecomposition(B);
@@ -312,9 +306,10 @@ function ComputeBitangents(thetas)
       DMb:=SingularValueDecomposition(Mb);
       print "\n SVs of A", Diagonal(DA),"\n SVs of B", Diagonal(DB),"\n SVs of mods_mat", Diagonal(Dmods_mat),"\n SVs of modstra", Diagonal(Dmodstra),"\n SVs of Atra", Diagonal(DAtra),"\n SVs of Btra", Diagonal(DBtra),"\n SVs of Mb", Diagonal(DMb);
   end if;
+  */
   return bitangents;
 
-end function;
+end intrinsic;
 
 function ComputeSquareRootOnP1xP1(detqdualonsegre)
 
@@ -509,7 +504,6 @@ end function;
 
 intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
 {}
-  g := Nrows(tau);
   thetas := ComputeThetas(tau);
   tritangents := ComputeTritangents(thetas);
   bitangents := ComputeBitangents(thetas);
@@ -521,3 +515,14 @@ intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
   return [quadric, cubic];
 end intrinsic;
 
+intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
+{}
+  tritangents := ComputeTritangents(thetas);
+  bitangents := ComputeBitangents(thetas);
+  if IsVerbose("User1", 1) then
+    print "\n tritangents:", tritangents;
+    print "\n bitangents:", bitangents;
+  end if;
+  quadric, cubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
+  return [quadric, cubic];
+end intrinsic;
