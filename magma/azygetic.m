@@ -187,6 +187,9 @@ function liftSLN(A, n)
     return Alift;
 end function;
 
+
+
+
 function decompose_symplectic(S)
      ZZ:=Integers();
      ZZ4:=Integers(4);

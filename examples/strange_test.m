@@ -50,7 +50,7 @@ Pi_big:=ChangeRing(Pi_big, CC);
 
 
 X:=Matrix(CC4, 4,1, [CC4.i: i in [1..4]]);
-
+/*
 TTB:=[];
 
 
@@ -63,18 +63,29 @@ end for;
 TtoS := Matrix(TTB[1..4]);
 D := DiagonalMatrix(Eltseq(Vector(TTB[5]) * (TtoS)^-1));
 M := TtoS^-1 * D^-1;
+*/
+
+quadric:=Evaluate(quadric, Eltseq(ChangeRing(Inverse(M),CC4)*X));
+quadric:=quadric/LeadingCoefficient(quadric);
+cubic:=Evaluate(cubic, Eltseq(ChangeRing(Inverse(M), CC4)*X));
+
+Ccan, map:=CanonicalImage(S);
+Cplane:=Domain(map);
+quadricOld:=CC4!Equations(Ccan)[3];
+quadricOld:=quadric/LeadingCoefficient(quadricOld);
+
+cubicOld:=CC4!Equations(Ccan)[2];
 
 
-quadric:=Evaluate(quadric, Eltseq(Inverse(M)*X));
-cubic:=Evaluate(cubic, Eltseq(Inverse(M)*X));
+differ:=cubic-cubicOld;
 
-diff:=cubic-CC4!F;
 
-mons2:=MonomialsOfDegree(CC4, 2);
+mons3:=MonomialsOfDegree(CC4, 3);
 
-X:=Matrix([[ Coefficient(diff,   m*CC4.i)-Coefficient(CC4!Q, m): m in mons2]   : i in [1..4]]);
+
+X:=Matrix([[ MonomialCoefficient(cubic,   m), MonomialCoefficient(cubicOld,   m)] cat [MonomialCoefficient(quadricOld*CC4.i, m): i in [1..4]] : m in mons3]);
 D:=SingularValueDecomposition(X);
-print CC4!Q-quadric, Diagonal(D);
+print quadricOld-quadric, Diagonal(D);
 
 
 

@@ -311,6 +311,32 @@ intrinsic ComputeBitangents(thetas::SeqEnum) -> SeqEnum
 
 end intrinsic;
 
+function OddThetaPrymInfoHyp(thetas)
+
+  CC := Parent(thetas[1]);
+  chars_even := EvenThetaCharacteristics(3);
+  g3thetassq := [];
+  for i := 1 to 64 do
+    s := Intseq(i mod 64,2,6);
+    s := Reverse(s);
+    delta := [s[1..3], s[4..6]];
+    if delta in chars_even then
+      delta_new1 := [[0] cat el : el in delta];
+      delta_new2 := [[0] cat delta[1], [1] cat delta[2]];
+    // formula from Lemma 1 (p. 148) of Farkas
+      g3thetassq[i] := thetas[TCharToIndex(delta_new1)]*thetas[TCharToIndex(delta_new2)];
+    else
+      Append(~g3thetassq, 0);
+    end if;
+  end for;
+  rosens:=RosenhainsFromThetaSquares(g3thetassq);
+  
+
+
+
+end function;
+
+
 function ComputeSquareRootOnP1xP1(detqdualonsegre)
 
   CC := BaseRing(Parent(detqdualonsegre));
@@ -501,6 +527,185 @@ function ComputeCurve(bitangents, tritangents)
 
 
 end function;
+
+function liftON(A, n)
+    ZZ:=Integers();
+    ZZ:=Integers();
+    id:=IdentityMatrix(ZZ, 4);
+    zer:=ZeroMatrix(ZZ, 4,4);
+    J1:=BlockMatrix([[zer, id],[zer, zer]]);
+    J:=BlockMatrix([[zer, id],[id, zer]]);
+
+    p:=Characteristic(BaseRing(A));
+    assert(BaseRing(A) eq GF(p));
+    N:=Nrows(A);
+    for i in [2..n] do
+        Alift:=ChangeRing(ChangeRing(Alift, ZZ), Integers(p^i));
+	Mat:=(J-Transpose(Alift)*J*Alift);
+//Some idea similar to HyperbolicDec in /SuperTheta/ThetaNull.m	
+    end for;
+    return Alift;
+end function;
+
+
+
+
+
+
+function MapSympl(vec1)
+	//Finds a symplectic transformation mapping vec1 to vec2
+	vec2:=Vector([GF(2)|0,1,1,1,0,1,0,1]);
+	ZZ:=Integers();
+        id:=IdentityMatrix(ZZ, 4);
+        zer:=ZeroMatrix(ZZ, 4,4);
+        idGF2:=IdentityMatrix(GF(2), 4);
+        zerGF2:=ZeroMatrix(GF(2), 4,4);
+	J1:=BlockMatrix([[zerGF2, idGF2],[zerGF2, zerGF2]]);
+        J:=BlockMatrix([[zerGF2, idGF2],[idGF2, zerGF2]]);
+
+        if vec1 eq 0 then
+		//Maybe transpose of this matrix?
+
+		return Matrix(ZZ, 8,8, [[1,0,0,0,0,0,0,0]
+[0,1, 1, 1, 0,-1, 1, 1],
+[0,0, 1, 0,0, 0, -1, 0],
+[0,0, 1, 0,0, -1, 1, 1],
+[0,0,0,0,1,0,0,0],
+[0,-1, -1, -1,0, 2, -1, -1],
+[0,0, 0, -1,0, 1, -1, -1],
+[0,0, -1, -1,0, -1, 1, 0]
+]);
+	end if;
+	V:=QuadraticSpace(J1);
+	sol1, kern1:= Solution(J*Transpose(Matrix(vec1)), Vector([GF(2)!1]));
+        sol2, kern2:= Solution(J*Transpose(Matrix(vec2)), Vector([GF(2)!1]));
+	for k in kern1 do
+		so:=sol1+k;
+		if (so*J1*Transpose(Matrix(so)))[1] eq 0 then
+	   	   sol1:= so;
+		   break;
+		end if;
+	end for;
+	for k in kern2 do
+                so:=sol2+k;
+                if (so*J1*Transpose(Matrix(so)))[1] eq 0 then
+                   sol2:= so;
+                   break;
+                end if;
+        end for;
+        ortho1:=OrthogonalComplement(V, sub<V|[vec1, sol1]>);
+        ortho2:=OrthogonalComplement(V, sub<V|[vec2, sol2]>);
+        bool, Trafo := IsIsometric(ortho2, ortho1);
+	Mat1:=Matrix([vec1, sol1] cat[Trafo(b): b in Basis(ortho2)]  );
+	Mat2:=Matrix([vec2, sol2] cat Basis(ortho2) );
+        return liftON(Mat1^(-1)*Mat2, 3);
+end function;
+
+
+
+function ComputeCurveVanTheta0(thetas, v)
+	g:=4;
+	CC:=Parent(thetas[1]);
+	I:=CC.1;
+	chara:=IndexToTChar(v);
+	S:=MapSympl(Vector([GF(2)! el : el in chara[1] cat chara[2]]));
+	A:=Submatrix(Transpose(S), [1..4], [1..4]);
+        B:=Submatrix(Transpose(S), [1..4], [5..8]);
+        C:=Submatrix(Transpose(S), [5..8], [1..4]);
+        D:=Submatrix(Transpose(S), [5..8], [5..8]);
+        vec1+:= Vector(Diagonal(B1*Transpose(A1)) cat Diagonal(D1*Transpose(C1)));
+        vec2+:= Vector(Diagonal(B2*Transpose(A2)) cat Diagonal(D2*Transpose(C2)));
+
+
+	even:=EvenThetaCharacteristics(g);
+	thetatrafo:=[CC!0: i in [1..2^(2*g)]];
+	for eve in even do
+		diag1:=Diagonal(B*Transpose(A));
+		diag2:=Diagonal(D*Transpose(C));
+		trafo:=Eltseq(Matrix([eve[1] cat eve[2]])*S+ Matrix(1,8, diag1 cat diag2);
+		trafo:=[trafo[1..g], trafo[g+1..2*g]];
+		exp:=&+[(trafo[1][i]-diag1[i]  ) * (trafo[2][i] +diag2[i])-eve[1][i]*eve[2][i]: i in [1..g]] div 2;
+		carry:=&+[ trafo[1][i]*(trafo[2][i] div 2): i in [1..g]];
+		thetatrafo[TCharToIndex(trafo)]:= (I)^exp*(-1)^carry    *theta[TCharToIndex(eve) ];
+	end for;
+	thetas:=thetatrafo;
+        tritangents := ComputeTritangents(thetas);
+        bitangents := OddThetaPrymInfoHyp(thetas);
+	bitangents:=bitangents[10, 23, 4, 20,  17, 9, 12,  1, 5, 11];
+
+        r:= #tritangents;
+  CC := Parent(tritangents[1][1][1]);
+  RR := RealField(Precision(CC));
+  CC4:=PolynomialRing(CC,4);
+  x:=Matrix(4,1,[CC4.i: i in [1..4]]);
+  mats1new:=[(Matrix(4,1, tritangents[i][1])*Matrix(1,4, tritangents[i][2])): i in [1..r]];
+  mats1new:=[(m +Transpose(m))/2 : m in mats1new];
+  mats1newx:=Matrix(CC4, 1, r,[(Transpose(x)*ChangeRing(mats1new[i], CC4)*x)[1,1]: i in [1..r]]);
+
+  Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
+  vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
+
+  CC3 := PolynomialRing(CC, 3);
+
+  fs := [&+[el[i]*CC3.i : i in [1..3]] : el in bitangents[1..r]];
+  mons:=MonomialsOfDegree(CC3,2);
+
+  fsq_mat := [];
+  for f in fs do
+    cs := [];
+    for m in mons do
+      Append(~cs, MonomialCoefficient(f^2,m));
+    end for;
+    Append(~fsq_mat, cs);
+  end for;
+  fsq_mat := Matrix(fsq_mat);
+  si := NumericalKernel(fsq_mat);
+  sirows:=Nrows(si);
+
+  N:=HorizontalJoin([  DiagonalMatrix(Eltseq(vi[i]))*fsq_mat : i in [1..Nrows(vi) ]]);
+  //TODO: Check singular values to see if rank is too small. If so then compute more tritangents.
+  DN:=SingularValueDecomposition(N);
+  gammaiinv:=NumericalKernel(N: Epsilon:=RR!(10^(-15)));
+
+  DXnew, U, V:=SingularValueDecomposition(Xnew);
+  Upart:=Matrix(U[1..7]);
+  phi:=Upart*DiagonalMatrix(Eltseq(gammaiinv))*fsq_mat;
+
+  //Kernel is not deterministic
+
+  Qpre:=Kernel(phi);
+  Qpre1:=Qpre*Upart;
+  Qnew:=&+[Eltseq(Basis(Qpre1)[1])[i]*mats1new[i]: i in [1..r] ];
+  dualelt:=mats1newx*ChangeRing(Transpose(Upart), CC4);
+  D, U, V:=SingularValueDecomposition(phi);
+  phiext:=HorizontalJoin(phi, Matrix(7,1, Eltseq(Conjugate(U)[7])));
+  if IsVerbose("User1", 1) then
+        Dfsqmat:=SingularValueDecomposition(fsq_mat);
+        Dphiext:=SingularValueDecomposition(Transpose(phiext));
+
+        print "SVs of fsq_mat", Diagonal(Dfsqmat),"\n SVs of Xnew=", Diagonal(DXnew), "\n SVs of N=", Diagonal(DN), "\n SVs of phi=", Diagonal(D), "\n SVs of phiext=", Diagonal(Dphiext);
+  end if;
+
+
+  phiTinv:=ChangeRing(Transpose(phiext)^(-1), CC4);
+  phiL:=dualelt*phiTinv;
+  qdual:=ZeroMatrix(CC4, 3,3);
+  count:=1;
+  for i in [1..3] do
+    for j in [i..3] do
+      qdual[i,j]:=phiL[1,count];
+        qdual[j, i]:=phiL[1, count];
+        count+:=1;
+    end for;
+  end for;
+  detqdual:=Determinant(qdual);
+
+
+
+
+end function;
+
+
 
 intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
 {}
