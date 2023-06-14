@@ -39,9 +39,13 @@ CC:=BaseRing(tau);
 Equ:=ReconstructCurveG4(tau);
 quadric:=Equ[1];
 cubic:=Equ[2];
+
 CC4:=Parent(quadric);
+
 CC1<t>:=PolynomialRing(CC);
 X:=Matrix(CC4, 4,1, [CC4.i: i in [1..4]]);
+
+
 
 TTB:=[];
 

@@ -395,6 +395,7 @@ function ComputeSquareRootOnP1xP1(detqdualonsegre)
       SegreCubic +:= xy[[i,j]] * P3mons[[i,j]];
     end for;
   end for;
+  print sqrt^2-f;
   return SegreCubic;
 end function;
 
@@ -466,7 +467,6 @@ function ComputeCurve(bitangents, tritangents)
     end for;
   end for;
   detqdual:=Determinant(qdual);
-  
   S:= NormalForm(Qnew);
 
   //Compute the matrix S2 whose inverse will transform the normal form into one where all coefficients are 1.
@@ -497,7 +497,7 @@ function ComputeCurve(bitangents, tritangents)
   //Reverse the coordinate transformation
   cubic := Evaluate(SegreCubic, Eltseq((v * ChangeRing(QtoSegre^(-1), CC4))[1]));
   quadric:=(v*ChangeRing(Qnew, CC4) *Transpose(v))[1,1];
-  return quadric, cubic;
+  return quadric, cubic, detqdual, detqdualonsegre, SegreCubic;
 
 
 end function;
@@ -511,8 +511,8 @@ intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
     print "\n tritangents:", tritangents;
     print "\n bitangents:", bitangents;
   end if;
-  quadric, cubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
-  return [quadric, cubic];
+  quadric, cubic, detqdual, detqdualonsegre, SegreCubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
+  return [quadric, cubic, detqdual, detqdualonsegre, Parent(quadric)!SegreCubic];
 end intrinsic;
 
 intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
@@ -523,6 +523,6 @@ intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
     print "\n tritangents:", tritangents;
     print "\n bitangents:", bitangents;
   end if;
-  quadric, cubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
-  return [quadric, cubic];
+  quadric, cubic,  detqdual, detqdualonsegre, SegreCubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
+  return [quadric, cubic, detqdual, detqdualonsegre, Parent(quadric)!SegreCubic];
 end intrinsic;
