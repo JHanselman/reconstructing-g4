@@ -27,21 +27,28 @@ end function;
 
 
 /* Mumford's eta */
-function EtaFunction0();
-eta1 := [1,0,0,0,0,0,0,0]; eta2 := [1,0,0,0,1,0,0,0];
-eta3 := [0,1,0,0,1,0,0,0]; eta4 := [0,1,0,0,1,1,0,0];
-eta5 := [0,0,1,0,1,1,0,0]; eta6 := [0,0,1,0,1,1,1,0];
-eta7 := [0,0,0,1,1,1,1,0]; eta8:= [0,0,0, 1,1,1,1,1];
-eta9 := [0,0,0,0,1,1,1,1]; eta10 := [0,0,0,0,0,0,0,0];
-etas := [eta1, eta2, eta3, eta4, eta5, eta6, eta7, eta8, eta9, eta10];
-return [ Transpose(Matrix(Integers(), [eta])) : eta in etas ];
+function EtaFunction0(g);
+ZZ:=Integers();
+zer:=ZeroMatrix(ZZ, g,g);
+zer1:=ZeroMatrix(ZZ, g,1);
+id:=IdentityMatrix(ZZ,g);
+        triang:=zer;
+        for i in [1..g] do
+                for j in [i..g] do
+                        triang[i,j]:=1;
+                end for;
+        end for;
+        M:=VerticalJoin(HorizontalJoin(id, zer1), HorizontalJoin(triang, zer1));
+        N:=VerticalJoin(HorizontalJoin(id, zer1), HorizontalJoin(zer1, triang));
+	return &cat[[Transpose(Matrix(Transpose(N)[i])), Transpose(Matrix(Transpose(M)[i])) ]: i in [1..g+1]];
 end function;
 
 
 /* Transform Mumford's eta by gamma */
 /* Note that these function are represented by tuples, but we give an evaluation later */
 function EtaFunction(gamma)
-return [ gamma *v : v in EtaFunction0() ];
+g:=Nrows(gamma)/2;
+return [ gamma *v : v in EtaFunction0(g) ];
 end function;
 
 
@@ -52,7 +59,7 @@ if #S eq 0 then
     return Transpose(Matrix(Integers(), [[ 0 : i in [1..2*g] ]]));
 end if;
 res:=Eltseq(&+[ eta[i] : i in S ]);
-return [res[1..4], res[5..8]];
+return [res[1..g], res[g+1..2*g]];
 end function;
 
 
@@ -109,9 +116,10 @@ end function;
 
 /* Theorem 4.5 */
 function TakaseQuotient(thetas_sq, eta, k, l, m)
+g := #Eltseq(eta[1]) div 2;
 U := UFromEtaFunction(eta);
-Bm := { 1..9 }; L := [ bp : bp in (Bm diff { k, l, m }) ];
-V := { L[1], L[2], L[3] }; W := { L[4], L[5], L[6] };
+Bm := { 1..2*g+1 }; L := [ bp : bp in (Bm diff { k, l, m }) ];
+V := { L[i]: i in [1..g-1] }; W := { L[i]: i in [g..2*(g-1)] };
 eps := EpsilonKLM(eta, k, l, m);
 num1 := thetas_sq[TCharToIndex(EtaValue(eta, U sdiff (V join { k, l })))];
 num2 := thetas_sq[TCharToIndex(EtaValue(eta, U sdiff (W join { k, l })))];
@@ -123,21 +131,27 @@ end function;
 
 
 /* Final function */
-intrinsic RosenhainInvariantsFromThetaSquares(thetas_sq::.) -> .
+intrinsic RosenhainInvariantsFromThetaSquares(thetas_sq::. , g::RngIntElt : SpTrafo := true) -> .
 {Computes Rosenhain invariants.}
-v0s := FindDelta(thetas_sq);
-if #v0s ne 10 then
-    error "Not right number of even zero characteristics:", v0s;
+if SpTrafo then
+   if g eq 4 then
+     v0s := FindDelta(thetas_sq);
+     if #v0s ne 10 then
+       error "Not right number of even zero characteristics:", v0s;
+     end if;
+     gamma := ComputeGamma(v0s);
+     eta := EtaFunction(gamma);
+   else
+     print "only implemented for g=4";
+   end if;
+else
+   eta:=EtaFunction0(g);
 end if;
-gamma := ComputeGamma(v0s);
-ZZ:=Integers();
-        zer:=ZeroMatrix(ZZ, 4,4);
-        id:=IdentityMatrix(ZZ,4);
-        J:=BlockMatrix([[zer, id],[-id,zer]]);
-print gamma*J*Transpose(gamma);
-eta := EtaFunction(gamma);
-rosens := [ TakaseQuotient(thetas_sq, eta, 1, l, 2) : l in [3..9] ];
+
+
+rosens := [ TakaseQuotient(thetas_sq, eta, 1, l, 2) : l in [3..2*g+1] ];
 return rosens;
+
 end intrinsic;
 
 

@@ -16,8 +16,8 @@ prec := 40;
 SetDefaultRealFieldPrecision(prec);
 QQ:=Rationals();
 R<x,y,z,w> := PolynomialRing(QQ,4);
-Q:=-10*x^2 - x*y + 8*x*z + 3*x*w - 9*y*z + y*w - 6*z^2 - 5*z*w - 5*w^2;
-F:=-x^2*y - x^2*z - 5*x^2*w - 6*x*y^2 - 2*x*y*z - 9*x*y*w + 7*x*z^2 + 3*x*z*w -
+Q:= 2*y^2 - 9*y*z + y*w - 6*z^2 - 5*z*w - 5*w^2;
+F:=x^3-x^2*y - x^2*z - 5*x^2*w - 6*x*y^2 - 2*x*y*z - 9*x*y*w + 7*x*z^2 + 3*x*z*w -
     8*x*w^2 - 10*y^3 + 3*y^2*z - y^2*w - 3*y*z^2 - 7*y*w^2 - z^3 + z^2*w -
     10*z*w^2 + 3*w^3;
 C := Curve(Proj(R),[F,Q]);
