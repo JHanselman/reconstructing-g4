@@ -9,7 +9,7 @@
  */
 
 
-
+import "rosenhain.m": FindDelta, ComputeGamma, EtaFunction, TakaseQuotient;
 
 function RealPart(A)
         return Matrix(Nrows(A), Ncols(A), [[Real(A[i,j]) : j in [1..Ncols(A)]] : i in [1..Nrows(A)]]);
@@ -531,8 +531,7 @@ function ComputeCurve(bitangents, tritangents)
   //Reverse the coordinate transformation
   cubic := Evaluate(SegreCubic, Eltseq((v * ChangeRing(QtoSegre^(-1), CC4))[1]));
   quadric:=(v*ChangeRing(Qnew, CC4) *Transpose(v))[1,1];
-  return quadric, cubic, detqdual, detqdualonsegre, SegreCubic;
-
+  return quadric, cubic;
 
 end function;
 
@@ -633,11 +632,73 @@ procedure TransformThetanulls(~thetas, S)
         thetas:=thetatrafo;
 end procedure;
 
+function ComputeSquareRootOnCone(f6)
+  R<z,x,y,w> := Parent(f6);
+  CC<I> := BaseRing(R);
+  RQ<Z,X,Y,W> := PolynomialRing(Rationals(),4);
+  S, mp := quo< RQ | X*Y - Z^2 >;
+  
+  mons6 := [mp(el) : el in MonomialsOfDegree(RQ,6) | not IsDivisibleBy(el, Z^2)];
+  mons3 := [mp(el) : el in MonomialsOfDegree(RQ,3) | not IsDivisibleBy(el, Z^2)];
+  monsred := [el : el in MonomialsOfDegree(R,6) | IsDivisibleBy(el, z^2)];
+  
+  //TODO: Make reduction function for cleaner code
+  //Reduce f6 mod xy-z^2
+  for m in monsred do
+    coeff := MonomialCoefficient(f6, m);
+    n := Degree(m, z);
+    k := n div 2;
+    f6 := f6 - coeff*m + coeff * (m div z^(2*k)) * (x*y)^k;
+  end for;
+  
+  prods := AssociativeArray();
+  for i := 1 to #mons3 do
+    m1 := mons3[i];
+    for j := i to #mons3 do
+      m2 := mons3[j];
+      if IsDefined(prods, m1*m2) then
+        prods[m1*m2] := Append(prods[m1*m2], [m1,m2]);
+      else
+        prods[m1*m2] := [[m1,m2]];
+      end if;
+    end for;
+  end for;
+
+  known := [mp(W^3)];
+  h:= hom< RQ -> R | z, x, y, w>;
+  f3 := Sqrt(CC!MonomialCoefficient(f6,h(known[1]^2)))*h(known[1]); // use @@ ?
+  while #known ne #mons3 do
+    for k->v in prods do
+      all_pairs := &cat v;
+      unknown := [el : el in all_pairs | not el in known];
+      if #unknown eq 1 then
+        partner := [el : el in [pair : pair in v | unknown[1] in pair][1] | el ne unknown[1]];
+        if partner[1] eq known[1] then
+          Append(~known, unknown[1]);
+          //printf "now %o known\n", unknown[1];
+          //printf "now #known = %o\n", #known;
+          Remove(~prods, k);
+          c := CC!MonomialCoefficient(f6,h(k));
+          for pair in [pair : pair in v | not unknown[1] in pair] do
+            if pair[1] eq pair[2] then
+              c -:= MonomialCoefficient(f3,h(pair[1]))*MonomialCoefficient(f3,h(pair[2]));
+            else
+              c -:= 2*MonomialCoefficient(f3,h(pair[1]))*MonomialCoefficient(f3,h(pair[2]));
+            end if;
+          end for;
+          c /:= 2*MonomialCoefficient(f3,h(known[1]));
+          f3 +:= c*h(unknown[1]);
+        end if;
+      end if;
+    end for;
+  end while;
+  return f3;
+end function;
+
 function ComputeCurveVanTheta0(thetas, v)
 	g:=4;
 	CC:=Parent(thetas[1]);
-	chara:=IndexToTChar(v,g);
-	S:=MapSympl(Vector([GF(2)! el : el in chara[1] cat chara[2]]));
+	S:=MapSympl(Vector([GF(2)! el : el in v[1] cat v[2]]));
         TransformThetanulls(~thetas, S);
         tritangents := ComputeTritangents(thetas);
         bitangents := OddThetaPrymInfoHyp(thetas);
@@ -756,11 +817,57 @@ The list of characteristics is:
            end for;
         end for;
         detqdual:=Determinant(qdual);
-	//TODO: Take square root here.
-	return Qnew, detqdual;	
+        
+        S:= NormalForm(Qnew);
+
+  //Compute the matrix S2 whose inverse will transform the normal form into one where all coefficients are 1.
+
+        S2 := S * Qnew * Transpose(S);
+        for i in [1..3] do
+          S2[i,i] := Sqrt(S2[i,i]);
+        end for;
+        S2[4,4] := 1;
+
+        I:=CC.1;
+  //Coordinate Transformation that maps x^2 + y^2 +z^2 to xy - z^2.
+        DiagToCone := Matrix(CC, 4, 4, [[1,0,0,0],[0,1/2*I,-1/2,0],[0,1/2*I,1/2,0], [0,0,0,1]]);
+
+  //Complete Transformation
+        QtoCone := DiagToCone * S2^(-1) * S; 
+
+
+        v:=Matrix(CC4, [[CC4.1, CC4.2, CC4.3, CC4.4]]);
+
+  //Apply coordinate transformation to detqdual to map the quadric to a cone
+  detqdualoncone := Evaluate(detqdual, Eltseq((v * ChangeRing(QtoCone, CC4))[1]));
+  
+  //Pull back to P1 x P1 and take the square root there
+  ConeCubic := ComputeSquareRootOnCone(detqdualoncone);
+ 
+  //Reverse the coordinate transformation
+  cubic := Evaluate(ConeCubic, Eltseq((v * ChangeRing(QtoCone^(-1), CC4))[1]));
+  quadric:=(v*ChangeRing(Qnew, CC4) *Transpose(v))[1,1];
+  return [quadric, cubic];
+
 end function;
 
+function ComputeCurveGeneric(thetas)
+  tritangents := ComputeTritangents(thetas);
+  bitangents := ComputeBitangents(thetas);
+  if IsVerbose("User1", 1) then
+    print "\n tritangents:", tritangents;
+    print "\n bitangents:", bitangents;
+  end if;
+  quadric, cubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
+  return [quadric, cubic];
+end function;
 
+function ComputeCurveHypEll(thetas, v0s)
+  gamma := ComputeGamma(v0s);
+  eta := EtaFunction(gamma);
+  rosens := [ TakaseQuotient([theta^2 : theta in thetas], eta, 1, l, 2) : l in [3..9] ];
+  return rosens;
+end function;
 
 intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
 {}
@@ -770,10 +877,10 @@ end intrinsic;
 
 intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
 {}
-  v0s = FindDelta(thetas);
-  NrOfZeros = #v0s;
+  v0s := FindDelta(thetas);
+  NrOfZeros := #v0s;
   if NrOfZeros eq 0 then
-    return CopmuteCurveGeneric(thetas);
+    return ComputeCurveGeneric(thetas);
   end if;
   
    if NrOfZeros eq 1 then
@@ -787,20 +894,4 @@ intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
   error("Wrong number of even theta characteristics are zero. ");
 end intrinsic;
 
-function ComputeCurveGeneric(thetas::SeqEnum)
-  tritangents := ComputeTritangents(thetas);
-  bitangents := ComputeBitangents(thetas);
-  if IsVerbose("User1", 1) then
-    print "\n tritangents:", tritangents;
-    print "\n bitangents:", bitangents;
-  end if;
-  quadric, cubic,  detqdual, detqdualonsegre, SegreCubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
-  return [quadric, cubic, detqdual, detqdualonsegre, Parent(quadric)!SegreCubic];
-end function;
 
-function ComputeCurveHypEll(thetas, v0s)
-  gamma := ComputeGamma(v0s);
-  eta := EtaFunction(gamma);
-  rosens := [ TakaseQuotient([theta^2 : theta in thetas], eta, 1, l, 2) : l in [3..2*g+1] ];
-  return rosens;
-end function;

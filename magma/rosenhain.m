@@ -71,7 +71,7 @@ end function;
 
 
 
-/* This finds the unique even zero characteristic */
+/* This finds the even zero characteristics */
 function FindDelta(thetas : prec := 20)
 if prec eq 0 then
     //CC := Parent(thetas[1]); prec := Precision(CC) - 100;
