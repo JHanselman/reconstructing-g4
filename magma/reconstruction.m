@@ -968,7 +968,7 @@ intrinsic RationalReconstructCurveG4(Pi::AlgMatElt)->SeqEnum
     cubic_Q +:= coeff_Q * m;
   end for;
   
-  return [quadric, cubic];
+  return [quadric_Q, cubic_Q];
 end intrinsic;
 
 
