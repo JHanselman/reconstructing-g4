@@ -895,3 +895,81 @@ intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
 end intrinsic;
 
 
+intrinsic RationalReconstructCurveG4(Pi::AlgMatElt)->SeqEnum
+{}
+  QQ := Rationals();
+  Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
+  tau := Pi1^-1*Pi2;
+  thetas := ComputeThetas(tau);
+  quadric, cubic := Explode(ReconstructCurveG4(thetas));
+  CC4 := Parent(quadric);
+  CC := BaseRing(CC4);
+  X:=Matrix(CC4, 4,1, [CC4.i: i in [1..4]]);
+
+  tritangentbasis := [
+    [GF(2)|1, 1, 1, 0, 1, 1, 1, 0],
+    [GF(2)|1, 0, 1, 0, 0, 0, 1, 0],
+    [GF(2)|1, 1, 1, 0, 0, 0, 1, 0],
+    [GF(2)|1, 0, 1, 0, 0, 1, 1, 0],
+    [GF(2)|0, 1, 1, 0, 0, 1, 0, 0]];
+
+  TTB:=[];
+  
+  for c in tritangentbasis do
+    chara := [Integers()!v : v in Eltseq(c)];
+    chara := [chara[1..4], chara[5..8]];
+    Append(~TTB, TritangentPlane(Pi, chara));
+  end for;
+
+  TtoS := Matrix(TTB[1..4]);
+  D := DiagonalMatrix(Eltseq(Vector(TTB[5]) * (TtoS)^-1));
+  M := TtoS^-1 * D^-1;
+
+  quadric:=Evaluate(quadric, Eltseq(ChangeRing(Inverse(M),CC4)*X));
+  quadric_C:=quadric/LeadingCoefficient(quadric);
+  cubic_C:=Evaluate(cubic, Eltseq(ChangeRing(Inverse(M), CC4)*X));
+  
+  R<x,y,z,w> := PolynomialRing(QQ, 4);
+  mons2 := MonomialsOfDegree(R,2);
+  mons3 := MonomialsOfDegree(R,3);
+  
+  h := hom< R -> CC4 | x, y, z, w>;
+  
+  quadric_Q:= R!0;
+  
+  for m in mons2 do
+    coeff_C := MonomialCoefficient(quadric_C, h(m));
+    coeff_Q := BestApproximation(Real(coeff_C), 1000000);
+    quadric_Q +:= coeff_Q * m;
+  end for;
+  
+  V := VectorSpace(QQ, #mons3);
+  U := sub< V |[Vector([MonomialCoefficient(quadric_Q *R.i, m) : m in mons3]) : i in [1..4]]>; 
+  B := ExtendBasis(U, V);
+  Uc := B[5..#mons3];
+  
+  MB := Matrix(B);
+  MUc := Matrix(Uc);
+  
+  v := Vector([MonomialCoefficient(cubic_C, h(m)) : m in mons3]); 
+  w := Vector(Eltseq((v * ChangeRing(MB^(-1), CC)))[5..#mons3]);
+  w := (w * ChangeRing(MUc, CC));
+  
+  scalar, i := Maximum([Abs(k) : k in Eltseq(w)]);
+  
+  w := w/w[i];
+  
+  cubic_C := &+[w2[i] * h(mons3[i]) : i in [1..#mons3]];
+  cubic_Q:= R!0;
+  
+  for m in mons3 do
+    coeff_C := MonomialCoefficient(cubic_C, h(m));
+    coeff_Q := BestApproximation(Real(coeff_C), 1000000);
+    cubic_Q +:= coeff_Q * m;
+  end for;
+  
+  return [quadric, cubic];
+end intrinsic;
+
+
+
