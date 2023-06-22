@@ -765,18 +765,29 @@ end function;
 intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
 {}
   thetas := ComputeThetas(tau);
-  tritangents := ComputeTritangents(thetas);
-  bitangents := ComputeBitangents(thetas);
-  if IsVerbose("User1", 1) then
-    print "\n tritangents:", tritangents;
-    print "\n bitangents:", bitangents;
-  end if;
-  quadric, cubic, detqdual, detqdualonsegre, SegreCubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
-  return [quadric, cubic, detqdual, detqdualonsegre, Parent(quadric)!SegreCubic];
+  return ReconstructCurveG4(thetas);
 end intrinsic;
 
 intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
 {}
+  v0s = FindDelta(thetas);
+  NrOfZeros = #v0s;
+  if NrOfZeros eq 0 then
+    return CopmuteCurveGeneric(thetas);
+  end if;
+  
+   if NrOfZeros eq 1 then
+    return ComputeCurveVanTheta0(thetas, v0s[1]);
+  end if;
+  
+  if NrOfZeros eq 10 then
+    return ComputeCurveHypEll(thetas, v0s);
+  end if;
+  
+  error("Wrong number of even theta characteristics are zero. ");
+end intrinsic;
+
+function ComputeCurveGeneric(thetas::SeqEnum)
   tritangents := ComputeTritangents(thetas);
   bitangents := ComputeBitangents(thetas);
   if IsVerbose("User1", 1) then
@@ -785,4 +796,11 @@ intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
   end if;
   quadric, cubic,  detqdual, detqdualonsegre, SegreCubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
   return [quadric, cubic, detqdual, detqdualonsegre, Parent(quadric)!SegreCubic];
-end intrinsic;
+end function;
+
+function ComputeCurveHypEll(thetas, v0s)
+  gamma := ComputeGamma(v0s);
+  eta := EtaFunction(gamma);
+  rosens := [ TakaseQuotient([theta^2 : theta in thetas], eta, 1, l, 2) : l in [3..2*g+1] ];
+  return rosens;
+end function;
