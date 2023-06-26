@@ -16,8 +16,9 @@ end function;
 function ThetaMagma(n,t)
   CC := Parent(t[1][1]);
   g := Nrows(t);
-  c := IntegerToThetaCharacterisitc(n,g);
-  return Theta(c, ZeroMatrix(CC,2*g,1), t);
+  c := IntegerToThetaCharacteristic(n,g);
+  //return Theta(c, ZeroMatrix(CC,2*g,1), t);
+  return Theta(c, ZeroMatrix(CC,g,1), t);
 end function;
 
 // Old version: recompute every time
@@ -75,9 +76,10 @@ function ComputeTableOfSigns(tau)
 end function;
 */
 
-// for g=4, 2^4=16 fundamental theta constants: a,b in ZZ/2^g with a=0
-// for g=4, 2^8=256 theta constants: a,b in ZZ/2^g
+// for g=4, 2^g=2^4=16 fundamental theta constants: a,b in ZZ/2^g with a=0
+// for g=4, 2^(2*g)=2^8=256 theta constants: a,b in ZZ/2^g
 
+// see Proposition 3.3
 function HadamardMatrix(fi, n)
   m := Matrix(2,2, [fi | 1, 1, 1, -1]);
   res := m;
@@ -90,24 +92,32 @@ end function;
 //TODO: finish this
 // Given theta_{0,b}(0,t) compute theta_{a,b}(0,t)
 // we still need to find a more genus g way to do this (Makarov = sum ab, not sum (-1)ab ab)
+// see Proposition 3.3
 function AllDuplication(fund_thetas)
   n := #fund_thetas;
-  b := fund_thetas;
+  g := Integers()!Log(2,n);
 
-  ThetaProducts := Matrix(8,8,
-	[fund_thetas[1]*b[1],fund_thetas[1]*b[2],fund_thetas[1]*b[3],fund_thetas[1]*b[4],fund_thetas[1]*b[5],fund_thetas[1]*b[6],fund_thetas[1]*b[7],fund_thetas[1]*b[8],
-	 fund_thetas[2]*b[2],fund_thetas[2]*b[1],fund_thetas[2]*b[4],fund_thetas[2]*b[3],fund_thetas[2]*b[6],fund_thetas[2]*b[5],fund_thetas[2]*b[8],fund_thetas[2]*b[7],
-	 fund_thetas[3]*b[3],fund_thetas[3]*b[4],fund_thetas[3]*b[1],fund_thetas[3]*b[2],fund_thetas[3]*b[7],fund_thetas[3]*b[8],fund_thetas[3]*b[5],fund_thetas[3]*b[6],
-	 fund_thetas[4]*b[4],fund_thetas[4]*b[3],fund_thetas[4]*b[2],fund_thetas[4]*b[1],fund_thetas[4]*b[8],fund_thetas[4]*b[7],fund_thetas[4]*b[6],fund_thetas[4]*b[5],
-	 fund_thetas[5]*b[5],fund_thetas[5]*b[6],fund_thetas[5]*b[7],fund_thetas[5]*b[8],fund_thetas[5]*b[1],fund_thetas[5]*b[2],fund_thetas[5]*b[3],fund_thetas[5]*b[4],
-	 fund_thetas[6]*b[6],fund_thetas[6]*b[5],fund_thetas[6]*b[8],fund_thetas[6]*b[7],fund_thetas[6]*b[2],fund_thetas[6]*b[1],fund_thetas[6]*b[4],fund_thetas[6]*b[3],
-	 fund_thetas[7]*b[7],fund_thetas[7]*b[8],fund_thetas[7]*b[5],fund_thetas[7]*b[6],fund_thetas[7]*b[3],fund_thetas[7]*b[4],fund_thetas[7]*b[1],fund_thetas[7]*b[2],
-	 fund_thetas[8]*b[8],fund_thetas[8]*b[7],fund_thetas[8]*b[6],fund_thetas[8]*b[5],fund_thetas[8]*b[4],fund_thetas[8]*b[3],fund_thetas[8]*b[2],fund_thetas[8]*b[1]]
+  ThetaProducts := Matrix(n,n,
+    [[fund_thetas[j+1]*fund_thetas[BitwiseXor(j,i)+1] : i in [0..n-1]] : j in [0..n-1]]
 		);
-  hadam := HadamardMatrix(Parent(fund_thetas[1]), 3);
+  hadam := HadamardMatrix(Parent(fund_thetas[1]), g);
 
   ThetaProducts := hadam*ThetaProducts;
-  ThetaProducts := ElementToSequence(ThetaProducts/8); // why divide?
+  ThetaProducts := ElementToSequence(ThetaProducts/n); // why divide?
 
   return ThetaProducts;
 end function;
+
+// duplication formula test
+/*
+  prec := 60;
+  C := ComplexField(prec);
+  val := C!0.866;
+  tau := Matrix(3,3, [C!0.2+val*C.1/2, C!0.15+C.1*val/9, C!0.05+C.1*val/10, C!0.15+C.1*val/9, -C!0.4+C.1*val, C!0.2+C.1*val/20, C!0.05+C.1*val/10, C!0.2+C.1*val/20, C!0.1+C.1*val*C!1.5]);
+  thconstants := [ ThetaMagma(i,tau) : i in [0..7]];
+  time allthetas2tau := AllDuplication(thconstants);
+  for i := 1 to 64 do
+    ComplexField(10)!Abs(allthetas2tau[i]-ThetaMagma(i-1,2*tau)^2);
+  end for;
+*/
+
