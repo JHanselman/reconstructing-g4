@@ -3,6 +3,7 @@
   azygetic.m
   reconstruction.m
   rosenhain.m
+  schottky.m
   signs.m
   theta.m
 }

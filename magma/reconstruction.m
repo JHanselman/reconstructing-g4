@@ -959,7 +959,7 @@ intrinsic RationalReconstructCurveG4(Pi::AlgMatElt)->SeqEnum
   
   w := w/w[i];
   
-  cubic_C := &+[w2[i] * h(mons3[i]) : i in [1..#mons3]];
+  cubic_C := &+[w[i] * h(mons3[i]) : i in [1..#mons3]];
   cubic_Q:= R!0;
   
   for m in mons3 do

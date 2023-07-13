@@ -1,5 +1,7 @@
 // make curves to glue using formulas in Howe--Leprevost--Poonen
+//QQ := RationalsExtra(100);
 QQ := RationalsExtra(20);
+//QQ := Rationals();
 K<t,u> := RationalFunctionField(QQ,2);
 bt := (16*t^3+16*t^2+6*t+1)/(8*t^2-1)^2;
 ct := (16*t^3+16*t^2+6*t+1)/(2*t*(4*t+1)*(8*t^2-1));
@@ -64,5 +66,19 @@ H2 := HyperellipticCurve(hev2);
 
 // now glue
 AttachSpec("~/github/gluing/magma/spec");
-AllArithmetic2GluingsCCFor22(H1, H2, BaseField(H1));
+Qs, Vs := AllArithmetic2GluingsCCFor22(H1, H2, BaseField(H1));
 
+// Check Schottky-Jung
+AttachSpec("~/github/reconstructing-g4/magma/spec");
+g := 4;
+
+good := [];
+for i->Q in Qs do
+  print i;
+  tau := SmallPeriodMatrix(Q);
+  err := Abs(SchottkyModularForm(tau : prec := 20));
+  print err;
+  if err lt 10^-10 then
+    Append(~good, i);
+  end if;
+end for;
