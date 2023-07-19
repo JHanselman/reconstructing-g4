@@ -1,3 +1,7 @@
+AttachSpec("../../../CHIMP/CHIMP.spec");
+AttachSpec("../../magma/spec");
+load "gluingfuncs.m";
+
 // make curves to glue using formulas in Howe--Leprevost--Poonen
 //QQ := RationalsExtra(100);
 QQ := RationalsExtra(20);
@@ -76,7 +80,7 @@ good := [];
 for i->Q in Qs do
   print i;
   tau := SmallPeriodMatrix(Q);
-  err := Abs(SchottkyModularForm(tau : prec := 20));
+  err := Abs(SchottkyModularForm(tau : prec := 30));
   print err;
   if err lt 10^-10 then
     Append(~good, i);

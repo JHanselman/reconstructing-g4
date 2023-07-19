@@ -80,9 +80,12 @@ Ech := EchelonForm(M);
 pivots := [Min([i: i in [1..16]| Ech[j,i] ne 0  ]): j in [1..5]];
 even := [ 1, 2, 3, 4, 6, 8, 9, 12, 15, 16 ];
 R16 := PolynomialRing(Rationals( ), 16);
-t8 := [R16.i^2: i in even];
-t16 := [R16.i^4: i in even];
+t8 := &+[R16.i^2: i in even];
+t16 := &+[R16.i^4: i in even];
 equ := t8^2-4*t16;
+
+subs := Setseq(MonomialsOfDegree(R16,1)); 
+
 for i in [1..5] do
 piv:= pivots[i];
 subs[piv]:= -&+[Ech[i, j]*R16.j: j in [piv+1..16]];
