@@ -6,5 +6,6 @@
   schottky.m
   signs.m
   theta.m
+  fast_theta.m
 }
 

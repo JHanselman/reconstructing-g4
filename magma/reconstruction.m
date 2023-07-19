@@ -32,14 +32,16 @@ function NormalForm(A)
 	return ret;
 end function;
 
-intrinsic ComputeThetas(tau::AlgMatElt) -> SeqEnum
+intrinsic ComputeThetas_old(tau::AlgMatElt) -> SeqEnum
 {}
+  //vprint G4Verb: "Computing Thetas...";
   CC := BaseRing(tau);
   g := Nrows(tau);
   thetas :=[];
   chars_even := EvenThetaCharacteristics(g);
   for i in [1..(2^(2*g) -1)] do
     characteristic := IndexToTChar(i, g);
+    //vprint G4Verb: "Computing Theta", i;
     if characteristic in chars_even then
         thetas[i] := Theta([CC!0 : i in [1..g]], tau : char := characteristic);  
     else
@@ -898,9 +900,9 @@ end intrinsic;
 intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
 {}
   QQ := Rationals();
-  //Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
-  //tau := Pi1^-1*Pi2;
-tau := SmallPeriodMatrix(Pi);
+  Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
+  tau := Pi1^-1*Pi2;
+//tau := SmallPeriodMatrix(Pi);
 thetas := ComputeThetas(tau);
   quadric, cubic := Explode(ReconstructCurveG4(thetas));
   CC4 := Parent(quadric);
