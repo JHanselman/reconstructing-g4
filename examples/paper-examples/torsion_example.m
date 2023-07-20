@@ -21,9 +21,9 @@ end function;
 
 
 // make curves to glue using formulas in Howe--Leprevost--Poonen
-QQ := RationalsExtra(100);
+//QQ := RationalsExtra(100);
 //QQ := RationalsExtra(20);
-//QQ := Rationals();
+QQ := Rationals();
 K<t,u> := RationalFunctionField(QQ,2);
 bt := (16*t^3+16*t^2+6*t+1)/(8*t^2-1)^2;
 ct := (16*t^3+16*t^2+6*t+1)/(2*t*(4*t+1)*(8*t^2-1));
@@ -76,6 +76,14 @@ hev := [Evaluate(el, [T,Eltseq(P2)[1]]) : el in Coefficients(h)];
 R3<z> := PolynomialRing(K2);
 hev := R3!hev;
 
+P2c := Points((-2*Q) @@ mp)[1];
+/*
+ev := [T,Eltseq(P2)[1]];
+Evaluate(ev,1);
+*/
+hevc := [Evaluate(el, [T,Eltseq(P2c)[1]]) : el in Coefficients(h)];
+hevc := R3!hevc;
+
 
 
 /* Value of eta on a set of branch points */
@@ -106,6 +114,20 @@ for i in [1..5] do
 	end for;
 end for;
 	
+
+rootsc := [el[1] : el in Roots(hevc)];
+theta4c := [K2!0: i in [1..16]];
+
+for i in [1..5] do
+	for j in [i+1..5] do
+	T := {i,j, 6};	
+	Tcomp := {1..6} diff T;
+        S := T sdiff U;
+	sign := (-1)^#(S meet U);
+	cha := EtaValue(eta, Setseq(S));
+	theta4c[TCharToIndex(cha)] := sign * &*[ &*[(rootsc[nu]-rootsc[mu])^(-1): nu in T]: mu in Tcomp];
+	end for;
+end for;
 
 M := ZeroMatrix(Rationals(), 5, 16);
 M[1, 8]:=1;
@@ -158,18 +180,36 @@ subsfin[16] := R4.5;
 equfin:=Evaluate(equnew, subsfin);
 
 Point :=[ theta4[j]: j in [6,9,12,15,16]];
+Pointc :=[ theta4c[j]: j in [6,9,12,15,16]];
 Den := Lcm([Denominator(t): t in Point]);
+Denc := Lcm([Denominator(t): t in Pointc]);
 Point := [Numerator(Den * p) : p in Point];
+Pointc := [Numerator(Denc * p) : p in Pointc];
 Point1 := [Evaluate(p, t1): p in Point];
-Point2 := [Evaluate(p, t2): p in Point];
+Point2 := [Evaluate(p, t2): p in Pointc];
 
 TSpace := &+[Evaluate(Derivative(equfin, i), Point1) * R4.i: i in [1..5]];  
 Sols := Evaluate(TSpace, Point2);
 Sc:=Scheme(AffineSpace(FP), Sols);
 Scomp := IrreducibleComponents(Sc);
 Scomp := [ReducedSubscheme(gh) : gh in Scomp];
-Ps := PointSearch(Scomp[12], 100); 
 
+SGlue := DefiningEquation(Scomp[27]);
+Pp<p> := PolynomialRing(QQ);
+for a in [-10000..10000] do
+  print a;
+  for b in [1..10000] do
+    if Gcd(a,b) eq 1 then
+      f := Evaluate(SGlue, [a/b, p]);
+      facs := Factorization(f);
+      for fac in facs do
+        if Degree(fac[1]) eq 1 then
+          print a, b, fac;
+        end if;
+      end for;
+    end if;
+  end for;
+end for;
 
 P:=Ps[1];
 
@@ -226,6 +266,24 @@ CC:= Parent(Q[1,1]);
 
 //Change polarization convention
 Q := Q* DiagonalJoin(IdentityMatrix(CC, 4), -IdentityMatrix(CC, 4)) ;
+
+
+> SGlue := DefiningEquation(Scomp[26]);
+> Pp<p> := PolynomialRing(QQ);
+> for a in [-1000000..1000000] do
+for>   for b in [1..1000000] do
+for|for>     if Gcd(a,b) eq 1 then
+for|for|if>       f := Evaluate(SGlue, [a/b, p]);
+for|for|if>       facs := Factorization(f);
+for|for|if>       for fac in facs do
+for|for|if|for>         if Degree(fac[1]) eq 1 then
+for|for|if|for|if>           print a, b, fac;
+for|for|if|for|if>         end if;
+for|for|if|for>       end for;
+for|for|if>     end if;
+for|for>   end for;
+for> end for;
+
 
 eqs := RationalReconstructCurveG4(Q);  
 eqs;
