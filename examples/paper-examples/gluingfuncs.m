@@ -5054,6 +5054,15 @@ function LiftFF(c, n)
 end function;
 
 
+
+function StandardSymplecticMatrix(g)
+        id:=IdentityMatrix(Integers(), g);
+        zer:=ZeroMatrix(Integers(), g,g);
+        J:=BlockMatrix(2,2, [[zer, id], [-id, zer]]);
+ return J;
+
+end function;
+
 function QFromPVFor22(P, V)
 /* Creates quotient of abelian variety corresponding to P by symplectic
  * subgroup corresponding to V */
