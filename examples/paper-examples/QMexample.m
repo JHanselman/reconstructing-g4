@@ -84,6 +84,75 @@ Poi2:=Eltseq(points[loo]);
 	print "\n";
 //end for;
 
+R:= Parent(f2);      
+IgusaInvariants(f2, R!0: normalize:=true);
+S, W:=IgusaInvariants(f2, R!0: normalize:=true);
+S:=[Rationals()!s : s in S];
+
+X1 := HyperellipticCurve(f);
+X2 := HyperellipticCurveFromIgusaInvariants(S);
+f2, g := HyperellipticPolynomials(X2);
+
+RS1 := RiemannSurface(f, 2: Precision:= 100); RS2 := RiemannSurface(f2, 2: Precision:= 100);
+P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
+Vs := AllVs2For22();
+P := DiagonalJoin(P1, P2);
+Qs := [];
+for V in Vs do
+  Q := QFromPVFor22(P, V);
+  Append(~Qs, Q);
+end for;
+
+good := [];
+for i->Q in Qs do
+  print i;
+  w1, w2 := SplitBigPeriodMatrix(Q);
+  tau := w1^(-1) *w2;
+  err := Abs(SchottkyModularForm(tau : prec := 20));
+  print err;
+  if err lt 10^-10 then
+    Append(~good, i);
+  end if;
+end for;
+
+
+V := Vs[120];
+
+Q := QFromPVFor22(P, V);
+//y^2 = 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
+//y^2 = 3*x^5 - 68*x^4 + 159*x^3 + 232*x^2 - 132*x + 16
+//Output:
+[
+    x^2 + 28/5*x*y + 18/5*y^2 - 224/5*z^2 + 102/5*z*w - 33/10*w^2,
+    -27/226*x*y^2 - 205/1808*x*z^2 + 15/113*x*z*w - 185/3616*x*w^2 - 39/452*y^3 
+        + y*z^2 - 271/452*y*z*w + 17/452*y*w^2
+]
+
+
+//tau := SmallPeriodMatrix(Q);
+
+CC:= Parent(Q[1,1]);
+
+//Change polarization convention
+//Q := Q* DiagonalJoin(IdentityMatrix(CC, 4), -IdentityMatrix(CC, 4)) ;
+
+eqs := RationalReconstructCurveG4(Q);  
+eqs;
+
+P3 := ProjectiveSpace(Parent(eqs[1]));
+C := Curve(Scheme(P3, eqs));
+
+p:= 19;
+Factorisation(LPolynomial(Curve(Reduction(C, p))));
+Factorisation(LPolynomial(Curve(Reduction(X1, p))));
+Factorisation(LPolynomial(Curve(Reduction(X2, p))));
+
+
+P2<x, y> := PolynomialRing(Rationals(), 2);
+plane_eq := Evaluate(Resultant(eqs[1], eqs[2], P3.1), [0,x,y,1]);
+result_C:=Curve(Scheme(AffineSpace(P2),plane_eq));
+result_P := BigPeriodMatrix(RiemannSurface(plane_eq:Precision:=500));
+EndomorphismAlgebra(result_P);
 
 
 /*
@@ -121,26 +190,3 @@ Poi2:=Eltseq(points[loo]);
 : -21/80 : 1/20 : 1), (5/42 : -17/42 : -1/21 : 1/24 : 1) ]
 */
 
-
-	/*Gluable big period matrix:
-	 [-0.963184807048691143775804321727128317611028074350089025052267152957525133551\
-    80605 - 1.25557025150367907271657491571749092797003083327754658375052329439\
-    65704571362422*I 0.59694812876367509291129278956341091235784510457202197850\
-    826532175535500180110885 - 0.0132137490202211926621439446063341640236840840\
-    23158157508797694055658978104110406*I -3.9606760110976947394807077019165289\
-    695755592879292300204619993434712240153979255E-91 -
-    1.2555702515036790727165749157174909279700308332775465837505232943965704571\
-    362422*I -1.670030533120866023063272739536612176237106263033779809254416969\
-    5500881085879790E-90 - 0.01321374902022119266214394460633416402368408402315\
-    8157508797694055658978104110406*I]
-[-1.003228746099198000144834241321290148608006408427047370498485507309411558484\
-    4072 - 0.894876374833599648797243701957174790492264911094127394246371280469\
-    75814984994393*I 1.75900643739134406931111636489708733977281540798627496935\
-    04497953846311991923061 + 0.62727354856749280328714854406912500690950599051\
-    321096602066839080939002482223994*I -4.451035040563474248776291304020048498\
-    6661257735594455840461037062481440761584376E-91 -
-    0.8948763748335996487972437019571747904922649110941273942463712804697581498\
-    4994393*I -1.85162999996080151306080688906303991867276020141670851474579984\
-    10515416921973253E-90 + 0.6272735485674928032871485440691250069095059905132\
-    1096602066839080939002482223994*I]
- */

@@ -31,10 +31,11 @@ eqs;
 
 P3 := ProjectiveSpace(Parent(eqs[1]));
 C := Curve(Scheme(P3, eqs));
-LPolynomial(C, 17);
+p:= 17;
+LPolynomial(C, p);
 
-LPolynomial(Curve(Reduction(X1, 17)));
-LPolynomial(Curve(Reduction(X2, 17)));
+LPolynomial(Curve(Reduction(X1, p)));
+LPolynomial(Curve(Reduction(X2, p)));
 
 
 
