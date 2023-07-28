@@ -129,7 +129,20 @@ equfin:=Evaluate(equnew, subsfin);
 
 evals:=[Evaluate(sub, subsfin): sub in subs];
 vecs := [Vector([MonomialCoefficient(ev, R4.i): i in [1..5]]): ev in evals];
-return vecs, equfin;
+t6 := R16.1;
+t7 := R16.6;
+t8 := R16.2;
+t9 := R16.3;
+t10 := R16.4;
+x1 := Evaluate(t6 - t7 + t9 + 2*t10, evals);
+x2 := Evaluate(-2* t6 - t7 + t9 - t10, evals);
+x3 := Evaluate(t6 - t7 - 2*t9 - t10, evals);
+x4 := Evaluate(t6 + 2*t7 - 3*t8 + t9 + 2*t10, evals);
+x5 := Evaluate(-2*t6 - t7 + 3*t8 - 2*t9 - t10, evals);
+x6 := Evaluate(t6 + 2*t7 + t9 - t10, evals);
+xi:=[x1,x2,x3,x4,x5,x6];
+
+return vecs, equfin, xi;
 end function;
 
 function ComputeCocycle(f)
