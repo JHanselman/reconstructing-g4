@@ -100,7 +100,7 @@ X1 := HyperellipticCurve(f);
 X2 := HyperellipticCurveFromIgusaInvariants(S);
 f2, g := HyperellipticPolynomials(X2);
 
-RS1 := RiemannSurface(f, 2: Precision:= 100); RS2 := RiemannSurface(f2, 2: Precision:= 100);
+RS1 := RiemannSurface(f, 2: Precision:= 20); RS2 := RiemannSurface(f2, 2: Precision:= 20);
 P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
 Vs := AllVs2For22();
 P := DiagonalJoin(P1, P2);
@@ -161,6 +161,27 @@ result_C:=Curve(Scheme(AffineSpace(P2),plane_eq));
 result_P := BigPeriodMatrix(RiemannSurface(plane_eq:Precision:=500));
 EndomorphismAlgebra(result_P);
 
+/*
+Found multiple gluings!
+point: (-11/28 : -11/24 : 125/336 : -1/336 : 1)
+Found multiple gluings!
+point: (29/98 : -157/98 : 40/49 : 3/392 : 1)
+Found multiple gluings!
+point: (-1/28 : -29/56 : 5/112 : 3/112 : 1)
+
+Poi2 := [-11/28, -11/24, 125/336, -1/336,1];  
+
+Result:
+
+238
+1.99692468311987660851692368119E-28
+
+
+552
+6.94746444747365946288892131774E-30
+
+
+*/
 
 /*
 [ (-1/4 : -9/20 : -9/20 : 1/40 : 1), (-17/20 : 3/20 : 3/80 : -1/80 : 1), (-9/40 
