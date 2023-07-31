@@ -52,24 +52,29 @@ end function;
 
 R<x>:=PolynomialRing(Rationals());
 f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
-Ig, Poi, U := IgusaTwist(x*Reverse(f));
+Ig, Poi, U0 := IgusaTwist(x*Reverse(f));
 R4:=PolynomialRing(Rationals(),5);
 Ig:=R4!Ig;
 TSpace := &+[Evaluate(Derivative(Ig, i), Poi) * R4.i: i in [1..5]];
 P4:=ProjectiveSpace(R4);
 Sch:=Scheme(P4, [Ig, TSpace]);
 points := PointSearch(Sch, 500);
-L := BaseRing(U);
-//for loo in [1..#points] do
-loo:= 142;
+L := BaseRing(U0);
+for loo in [1..#points] do
+//loo:= 142;
 Poi2:=Eltseq(points[loo]);
 	TSpace2 := &+[Evaluate(Derivative(Ig, i), Poi2) * R4.i: i in [1..5]];
 	if Evaluate(TSpace2, Poi) eq 0 then
 		continue;
 	end if;
-	theta41part := Eltseq(Vector(L, Poi2)*U);
-	vecs := IgusaCoordinates();
-	theta41 := [&+[vec[i]* theta41part[i]: i in [1..5]]: vec in vecs];
+	theta41part := Eltseq(Vector(L, Poi2)*U0);
+	vecs, equfin, xi := IgusaCoordinates();
+    evs := [Evaluate(x, theta41part) : x in xi];
+    if #Seqset(evs) ne #evs then
+      print "Found multiple gluings!";
+      printf "point: %o\n", points[loo];
+    end if;
+	theta41 := [&+[vec[i]*theta41part[i]: i in [1..5]]: vec in vecs];
 	if #[th: th in theta41| th eq 0] gt 6 then
 		continue;
 	end if;
@@ -77,12 +82,14 @@ Poi2:=Eltseq(points[loo]);
 	pl:=InfinitePlaces(L)[1];
 	S<X,Y>:=PolynomialRing(L,2);
 	equ := Y^2- Evaluate(f2, X);
+    /*
 	Surf:= RiemannSurface(equ, pl: Precision:= 80);
 	Pi := BigPeriodMatrix(Surf);
 	EndJ2:= EndomorphismAlgebra(Pi);
 	print EndJ2, loo;
 	print "\n";
-//end for;
+    */
+end for;
 
 R:= Parent(f2);      
 IgusaInvariants(f2, R!0: normalize:=true);
