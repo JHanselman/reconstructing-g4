@@ -5100,7 +5100,7 @@ function findV(RS1, RS2, roots_f2)
   
   
   roots_f1 := [Evaluate(r[1], v): r in Sort(Roots(f1, L))];
-  roots_f2 := [Evaluate(r[1], v): r in roots_f2];
+  roots_f2 := [Evaluate(r, v): r in roots_f2];
   HB1 := [e`EP : e in HomologyBasis(RS1)`Edges];
   HB2 := [e`EP : e in HomologyBasis(RS2)`Edges];
   
@@ -5146,8 +5146,8 @@ function findV(RS1, RS2, roots_f2)
   M_p1 := PermutationMatrix(GF(2), p1);
   M_p2 := PermutationMatrix(GF(2), p2);
   
-  M1 := M_p1 * M1 * SymB1;
-  M2 := M_p2 * M2 * SymB2;
+  M1 := M_p1^(-1) * M1 * Transpose(SymB1);
+  M2 := M_p2^(-1) * M2 * Transpose(SymB2);
   
   MM := Matrix(GF(2), [[1,1,0,0,0],
                                  [0,0,1,1,0],
@@ -5164,7 +5164,7 @@ function findV(RS1, RS2, roots_f2)
   A1 := Solution(Transpose(M1), MM);
   A2 := Solution(Transpose(M2), MM);
   
-  return Image(HorizontalJoin(A1, A2));
+  return Image(HorizontalJoin(A1^(-1), A2^(-1)));
 end function;
 
 

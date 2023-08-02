@@ -1,6 +1,6 @@
 AttachSpec("../../magma/spec");
 load "Galois.m";
-
+load "gluingfuncs.m";
 function TakaseQuotientSq(theta4, eta, k, l, m)
 g := #Eltseq(eta[1]) div 2;
 U := {1,3,5};
@@ -40,7 +40,7 @@ for i in [1..5] do
         end for;
 end for;
 if &and[theta4test[i]*theta4[1] eq theta4[i]*theta4test[1]: i in [1..16]] then
-return ftest;
+return ftest, rostest;
 end if;
 end for;
 
@@ -52,16 +52,21 @@ end function;
 
 R<x>:=PolynomialRing(Rationals());
 f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
-Ig, Poi, U0 := IgusaTwist(x*Reverse(f));
+
+if Degree(f) ne 6 then
+  f := x*Reverse(f);
+end if;
+
+Ig, Poi, U0 := IgusaTwist(f);
 R4:=PolynomialRing(Rationals(),5);
 Ig:=R4!Ig;
 TSpace := &+[Evaluate(Derivative(Ig, i), Poi) * R4.i: i in [1..5]];
 P4:=ProjectiveSpace(R4);
 Sch:=Scheme(P4, [Ig, TSpace]);
-points := PointSearch(Sch, 500);
+//points := PointSearch(Sch, 500);
 L := BaseRing(U0);
 for loo in [1..#points] do
-//loo:= 142;
+loo:= 142;
 Poi2:=Eltseq(points[loo]);
 	TSpace2 := &+[Evaluate(Derivative(Ig, i), Poi2) * R4.i: i in [1..5]];
 	if Evaluate(TSpace2, Poi) eq 0 then
@@ -78,7 +83,7 @@ Poi2:=Eltseq(points[loo]);
 	if #[th: th in theta41| th eq 0] gt 6 then
 		continue;
 	end if;
-	f2 := HyperellipticCurveFromTheta4(theta41);
+	f2, ros := HyperellipticCurveFromTheta4(theta41);
 	pl:=InfinitePlaces(L)[1];
 	S<X,Y>:=PolynomialRing(L,2);
 	equ := Y^2- Evaluate(f2, X);
@@ -98,9 +103,25 @@ S:=[Rationals()!s : s in S];
 
 X1 := HyperellipticCurve(f);
 X2 := HyperellipticCurveFromIgusaInvariants(S);
-f2, g := HyperellipticPolynomials(X2);
+f2Q, g := HyperellipticPolynomials(X2);
 
-RS1 := RiemannSurface(f, 2: Precision:= 20); RS2 := RiemannSurface(f2, 2: Precision:= 20);
+if Degree(f2Q) ne 6 then
+  f2Q := x*Reverse(f2Q);
+  X2 := HyperellipticCurve(f2Q);
+end if;
+
+
+
+bool, c := IsQuadraticTwist(BaseChange(X2, L), HyperellipticCurve(f2));
+twistX2:= HyperellipticCurve(c*f2);
+bool2, phi := IsIsomorphic(twistX2 , BaseChange(X2, L));
+
+roots_f2 := [phi(twistX2![r, 0])[1] : r in ([L!0,1] cat ros)] cat [phi(twistX2![1,0,0])[1]];
+
+RS1 := RiemannSurface(f, 2: Precision:= 20); RS2 := RiemannSurface(f2Q, 2: Precision:= 20);
+
+V:= findV(RS1, RS2, roots_f2 );
+
 P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
 Vs := AllVs2For22();
 P := DiagonalJoin(P1, P2);
