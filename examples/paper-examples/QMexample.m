@@ -51,8 +51,8 @@ end function;
 
 
 R<x>:=PolynomialRing(Rationals());
-f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
-
+//f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
+f :=(x^2-2)*(x-3)*(x-4)*(x-5)*(x-6);
 if Degree(f) ne 6 then
   f := x*Reverse(f);
 end if;
@@ -63,10 +63,12 @@ Ig:=R4!Ig;
 TSpace := &+[Evaluate(Derivative(Ig, i), Poi) * R4.i: i in [1..5]];
 P4:=ProjectiveSpace(R4);
 Sch:=Scheme(P4, [Ig, TSpace]);
-//points := PointSearch(Sch, 500);
+points := PointSearch(Sch, 500);
 L := BaseRing(U0);
-for loo in [1..#points] do
-loo:= 142;
+correctV :=0;
+falseV := 0;
+for loo in [1..500] do
+print loo;
 Poi2:=Eltseq(points[loo]);
 	TSpace2 := &+[Evaluate(Derivative(Ig, i), Poi2) * R4.i: i in [1..5]];
 	if Evaluate(TSpace2, Poi) eq 0 then
@@ -78,6 +80,7 @@ Poi2:=Eltseq(points[loo]);
     if #Seqset(evs) ne #evs then
       print "Found multiple gluings!";
       printf "point: %o\n", points[loo];
+      continue;
     end if;
 	theta41 := [&+[vec[i]*theta41part[i]: i in [1..5]]: vec in vecs];
 	if #[th: th in theta41| th eq 0] gt 6 then
@@ -94,7 +97,7 @@ Poi2:=Eltseq(points[loo]);
 	print EndJ2, loo;
 	print "\n";
     */
-end for;
+//end for;
 
 R:= Parent(f2);      
 IgusaInvariants(f2, R!0: normalize:=true);
@@ -123,7 +126,18 @@ RS1 := RiemannSurface(f, 2: Precision:= 20); RS2 := RiemannSurface(f2Q, 2: Preci
 V:= findV(RS1, RS2, roots_f2 );
 
 P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
-Vs := AllVs2For22();
+P := DiagonalJoin(P1, P2);
+Q := QFromPVFor22(P, V);
+w1, w2 := SplitBigPeriodMatrix(Q);
+tau := w1^(-1) *w2;
+err := Abs(SchottkyModularForm(tau : prec := 20));
+if err gt 10^(-20) then
+  falseV+:= 1;
+else
+  correctV+:= 1;
+end if;
+end for;
+/*Vs := AllVs2For22();
 P := DiagonalJoin(P1, P2);
 Qs := [];
 for V in Vs do
@@ -143,6 +157,7 @@ for i->Q in Qs do
   end if;
 end for;
 
+loo = 67, 121 are wrong
 
 V := Vs[120];
 

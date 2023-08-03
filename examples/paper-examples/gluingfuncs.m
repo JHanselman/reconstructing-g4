@@ -5164,7 +5164,7 @@ function findV(RS1, RS2, roots_f2)
   A1 := Solution(Transpose(M1), MM);
   A2 := Solution(Transpose(M2), MM);
   
-  return Image(HorizontalJoin(A1^(-1), A2^(-1)));
+  return Image(HorizontalJoin(A1, A2));
 end function;
 
 
