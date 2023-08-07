@@ -53,9 +53,12 @@ end function;
 R<x>:=PolynomialRing(Rationals());
 //f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
 f :=(x^2-2)*(x-3)*(x-4)*(x-5)*(x-6);
+f := EvenModel(f);
+/*
 if Degree(f) ne 6 then
   f := x*Reverse(f);
 end if;
+*/
 
 Ig, Poi, U0 := IgusaTwist(f);
 R4:=PolynomialRing(Rationals(),5);
@@ -68,7 +71,7 @@ L := BaseRing(U0);
 correctV :=0;
 falseV := 0;
 for loo in [1..500] do
-print loo;
+printf "curve index = %o\n", loo;
 Poi2:=Eltseq(points[loo]);
 	TSpace2 := &+[Evaluate(Derivative(Ig, i), Poi2) * R4.i: i in [1..5]];
 	if Evaluate(TSpace2, Poi) eq 0 then
@@ -88,7 +91,7 @@ Poi2:=Eltseq(points[loo]);
 	end if;
 	f2, ros := HyperellipticCurveFromTheta4(theta41);
 	pl:=InfinitePlaces(L)[1];
-	S<X,Y>:=PolynomialRing(L,2);
+	S<X,Y>:=PolynomialRing(L,3);
 	equ := Y^2- Evaluate(f2, X);
     /*
 	Surf:= RiemannSurface(equ, pl: Precision:= 80);
@@ -107,11 +110,13 @@ S:=[Rationals()!s : s in S];
 X1 := HyperellipticCurve(f);
 X2 := HyperellipticCurveFromIgusaInvariants(S);
 f2Q, g := HyperellipticPolynomials(X2);
-
+f2Q := EvenModel(f2Q);
+X2 := HyperellipticCurve(f2Q);
+/*
 if Degree(f2Q) ne 6 then
   f2Q := x*Reverse(f2Q);
-  X2 := HyperellipticCurve(f2Q);
 end if;
+*/
 
 
 
@@ -131,13 +136,15 @@ Q := QFromPVFor22(P, V);
 w1, w2 := SplitBigPeriodMatrix(Q);
 tau := w1^(-1) *w2;
 err := Abs(SchottkyModularForm(tau : prec := 20));
+printf "error = %o\n", err;
 if err gt 10^(-20) then
   falseV+:= 1;
 else
   correctV+:= 1;
 end if;
 end for;
-/*Vs := AllVs2For22();
+/*
+Vs := AllVs2For22();
 P := DiagonalJoin(P1, P2);
 Qs := [];
 for V in Vs do
