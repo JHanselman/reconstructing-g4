@@ -147,7 +147,7 @@ end function;
 
 function ComputeCocycle(f)
 	ActionOnTheta, signs, sigmas := ComputeGaloisAction(f);
-        vecs, Igusa := IgusaCoordinates();
+    vecs, Igusa := IgusaCoordinates();
 	return [Transpose(Matrix([signs[j][i] * vecs[ActionOnTheta[j][i]]: i in [1..5]]  )): j in [1..#ActionOnTheta]], sigmas, Igusa;
 end function;
 
@@ -156,47 +156,50 @@ end function;
 
 function IgusaTwist(f)
 	coc, sigmas, Igusa := ComputeCocycle(f);
-        L := Domain(sigmas[1]);
-        coc := [ChangeRing(co, L): co in coc];
-        cocV := [BlockMatrix(5,5,[RepresentationMatrix(a): a in Eltseq(co)]): co in coc];
-	V, m := KSpace(L, Rationals());
-        n:= Dimension(V);
-        sigmasV:= [m^(-1) * sig * m: sig in sigmas];
-        Matsigmas := [Transpose(Matrix( [ sig(V.i): i in [1..n]]  )): sig in sigmasV];
-        Matsigmas5 := [DiagonalJoin([mat: i in [1..5]]): mat in Matsigmas];
-        IntKer := &meet[Kernel(Transpose(Matsigmas5[i])^(-1)-cocV[i]): i in [1..#coc]];
-        U0 := Matrix([ [Inverse(m)(V!(Eltseq(b)[n*i+1..n*(i+1)])): i in [0..4]]:      b in Basis(IntKer)]);
-        
-        R4 := PolynomialRing(L, 5);
-	UR4:=ChangeRing(U0, R4);
-       Igusa:=Evaluate(Igusa, [R4.i: i in [1..5]]);
-        X := Matrix(R4,5,1, [R4.i: i in [1..5]]);
-	Igtest:=Evaluate(Igusa, Eltseq(Transpose(UR4)*X));
-        
-	roots := Roots(f, L);
-        roots := [ro[1]: ro in roots];
+    if #sigmas eq 0 then
+      L := Rationals();
+      U0 := IdentityMatrix(L,5);
+      Igtest := Igusa;
+    else
+      L := Domain(sigmas[1]);
+      coc := [ChangeRing(co, L): co in coc];
+      cocV := [BlockMatrix(5,5,[RepresentationMatrix(a): a in Eltseq(co)]): co in coc];
+      V, m := KSpace(L, Rationals());
+      n:= Dimension(V);
+      sigmasV:= [m^(-1) * sig * m: sig in sigmas];
+      Matsigmas := [Transpose(Matrix( [ sig(V.i): i in [1..n]]  )): sig in sigmasV];
+      Matsigmas5 := [DiagonalJoin([mat: i in [1..5]]): mat in Matsigmas];
+      IntKer := &meet[Kernel(Transpose(Matsigmas5[i])^(-1)-cocV[i]): i in [1..#coc]];
+      U0 := Matrix([ [Inverse(m)(V!(Eltseq(b)[n*i+1..n*(i+1)])): i in [0..4]]:      b in Basis(IntKer)]);
+
+      R4 := PolynomialRing(L, 5);
+      UR4:=ChangeRing(U0, R4);
+      Igusa:=Evaluate(Igusa, [R4.i: i in [1..5]]);
+      X := Matrix(R4,5,1, [R4.i: i in [1..5]]);
+      Igtest:=Evaluate(Igusa, Eltseq(Transpose(UR4)*X));
+    end if;
+
+    roots := Roots(f, L);
+    roots := [ro[1]: ro in roots];
 	Sort(~roots);
 	U:={1,3,5};
 	eta := EtaFunction0(2);
 
-theta4 := [L!0: i in [1..16]];
+  theta4 := [L!0: i in [1..16]];
 
-for i in [1..5] do
-        for j in [i+1..5] do
-        T := {i,j, 6};
-        Tcomp := {1..6} diff T;
-        S := T sdiff U;
-        sign := (-1)^#(S meet U);
-        cha := EtaValue(eta, Setseq(S));
-        theta4[TCharToIndex(cha)] := sign * &*[ &*[(roots[nu]-roots[mu])^(-1): nu in T]: mu in Tcomp];
-        end for;
-end for;
+  for i in [1..5] do
+    for j in [i+1..5] do
+      T := {i,j, 6};
+      Tcomp := {1..6} diff T;
+      S := T sdiff U;
+      sign := (-1)^#(S meet U);
+      cha := EtaValue(eta, Setseq(S));
+      theta4[TCharToIndex(cha)] := sign * &*[ &*[(roots[nu]-roots[mu])^(-1): nu in T]: mu in Tcomp];
+    end for;
+  end for;
 	Point :=[ theta4[j]: j in [6,9,12,15,16]];
    	PointOnTwist:=[el: el in Eltseq(Vector(Point)*U0^(-1))];
 	PointOnTwist:=[Rationals()!(el/PointOnTwist[1]): el in PointOnTwist];
-
-
-
 	return Igtest, PointOnTwist, U0;
 end function;
 
