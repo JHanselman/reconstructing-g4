@@ -1,4 +1,5 @@
 AttachSpec("../../magma/spec");
+SetDebugOnError(true);
 load "Galois.m";
 load "gluingfuncs.m";
 function TakaseQuotientSq(theta4, eta, k, l, m)
@@ -19,29 +20,39 @@ function HyperellipticCurveFromTheta4(theta4)
 g:=2;
 L:=Parent(theta4[1]);
 eta:=EtaFunction0(2);
-ros := [ Sqrt(TakaseQuotientSq(theta4, eta, 1, l, 2)) : l in [3..2*g+1] ];
+//ros := [ Sqrt(TakaseQuotientSq(theta4, eta, 1, l, 2)) : l in [3..2*g+1] ];
+ros := [];
+for l in [3..2*g+1] do
+  bool, s := IsSquare(TakaseQuotientSq(theta4, eta, 1, l, 2));
+  assert bool;
+  Append(~ros,s);
+end for;
 U:={1,3,5};
 R<X>:=PolynomialRing(L);
 for loo in [0..7] do
-bin:=Intseq(loo,2,3);
-rostest:= [ros[water]*(-1)^bin[water]: water in [1..3]];
-rootstest := [0,1] cat [-ro/(ro-2): ro in rostest] cat [-1];
-ftest:=X*(X-1)*&*[(X-L!ro): ro in rostest];
-//print IgusaInvariantsEqual(IgusaInvariants(f), IgusaInvariants(ftest));
-theta4test:= [L!0: i in [1..16]];
-for i in [1..5] do
-        for j in [i+1..5] do
-        T := {i,j, 6};
-        Tcomp := {1..6} diff T;
-        S := T sdiff U;
-        sign := (-1)^#(S meet U);
-        cha := EtaValue(eta, Setseq(S));
-        theta4test[TCharToIndex(cha)] := sign * &*[ &*[(rootstest[nu]-rootstest[mu])^(-1): nu in T]: mu in Tcomp];
-        end for;
-end for;
-if &and[theta4test[i]*theta4[1] eq theta4[i]*theta4test[1]: i in [1..16]] then
-return ftest, rostest;
-end if;
+  bin:=Intseq(loo,2,3);
+  rostest:= [ros[water]*(-1)^bin[water]: water in [1..3]];
+  rootstest := [0,1] cat [-ro/(ro-2): ro in rostest] cat [-1];
+  if #Seqset(rootstest) ne #rootstest then
+    print "found roots with opposite signs";
+    continue;
+  end if; 
+  ftest:=X*(X-1)*&*[(X-L!ro): ro in rostest];
+  //print IgusaInvariantsEqual(IgusaInvariants(f), IgusaInvariants(ftest));
+  theta4test:= [L!0: i in [1..16]];
+  for i in [1..5] do
+    for j in [i+1..5] do
+      T := {i,j, 6};
+      Tcomp := {1..6} diff T;
+      S := T sdiff U;
+      sign := (-1)^#(S meet U);
+      cha := EtaValue(eta, Setseq(S));
+      theta4test[TCharToIndex(cha)] := sign * &*[ &*[(rootstest[nu]-rootstest[mu])^(-1): nu in T]: mu in Tcomp];
+    end for;
+  end for;
+  if &and[theta4test[i]*theta4[1] eq theta4[i]*theta4test[1]: i in [1..16]] then
+    return ftest, rostest;
+  end if;
 end for;
 
 end function;
@@ -52,10 +63,14 @@ end function;
 
 R<x>:=PolynomialRing(Rationals());
 //f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
-f :=(x^2-2)*(x-3)*(x-4)*(x-5)*(x-6);
+//f :=(x^2-2)*(x-3)*(x-4)*(x-5)*(x-6);
+f := (x-1)*(x-2)*(x-3)*(x-4)*(x-5)*(x-6);
+f := EvenModel(f);
+/*
 if Degree(f) ne 6 then
   f := x*Reverse(f);
 end if;
+*/
 
 Ig, Poi, U0 := IgusaTwist(f);
 R4:=PolynomialRing(Rationals(),5);
@@ -67,8 +82,9 @@ points := PointSearch(Sch, 500);
 L := BaseRing(U0);
 correctV :=0;
 falseV := 0;
+bad_Vs := [];
 for loo in [1..500] do
-print loo;
+printf "curve index = %o\n", loo;
 Poi2:=Eltseq(points[loo]);
 	TSpace2 := &+[Evaluate(Derivative(Ig, i), Poi2) * R4.i: i in [1..5]];
 	if Evaluate(TSpace2, Poi) eq 0 then
@@ -88,7 +104,7 @@ Poi2:=Eltseq(points[loo]);
 	end if;
 	f2, ros := HyperellipticCurveFromTheta4(theta41);
 	pl:=InfinitePlaces(L)[1];
-	S<X,Y>:=PolynomialRing(L,2);
+	S<X,Y>:=PolynomialRing(L,3);
 	equ := Y^2- Evaluate(f2, X);
     /*
 	Surf:= RiemannSurface(equ, pl: Precision:= 80);
@@ -107,11 +123,13 @@ S:=[Rationals()!s : s in S];
 X1 := HyperellipticCurve(f);
 X2 := HyperellipticCurveFromIgusaInvariants(S);
 f2Q, g := HyperellipticPolynomials(X2);
-
+f2Q := EvenModel(f2Q);
+X2 := HyperellipticCurve(f2Q);
+/*
 if Degree(f2Q) ne 6 then
   f2Q := x*Reverse(f2Q);
-  X2 := HyperellipticCurve(f2Q);
 end if;
+*/
 
 
 
@@ -131,13 +149,17 @@ Q := QFromPVFor22(P, V);
 w1, w2 := SplitBigPeriodMatrix(Q);
 tau := w1^(-1) *w2;
 err := Abs(SchottkyModularForm(tau : prec := 20));
+printf "error = %o\n", err;
 if err gt 10^(-20) then
+  Append(~bad_Vs, loo);
   falseV+:= 1;
 else
   correctV+:= 1;
 end if;
 end for;
-/*Vs := AllVs2For22();
+printf "# bad Vs = %o\n", falseV;
+/*
+Vs := AllVs2For22();
 P := DiagonalJoin(P1, P2);
 Qs := [];
 for V in Vs do

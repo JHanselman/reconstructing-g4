@@ -5090,6 +5090,21 @@ return Q;
 
 end function;
 
+function EvenModel(f)
+  R<x> := Parent(f);
+  roots := [el[1] : el in Roots(f)];
+  if Degree(f) mod 2 eq 1 then
+    if #roots eq 0 then
+      return R!(x*Reverse(f));
+    else
+      pt := Maximum(roots)+1;
+      //1/(x-pt)
+      return R!(x^(Degree(f)+1)*Evaluate(f, 1/x + pt));
+    end if;
+  end if;
+  return f;
+end function;
+
 function findV(RS1, RS2, roots_f2)
 
   f1 := RS1`DefiningPolynomial;
@@ -5097,8 +5112,6 @@ function findV(RS1, RS2, roots_f2)
   v := InfinitePlaces(L)[1];
   
   sort_roots := RS1`Ordering;
-  
-  
   roots_f1 := [Evaluate(r[1], v): r in Sort(Roots(f1, L))];
   roots_f2 := [Evaluate(r, v): r in roots_f2];
   HB1 := [e`EP : e in HomologyBasis(RS1)`Edges];
