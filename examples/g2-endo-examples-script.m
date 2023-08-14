@@ -1,3 +1,4 @@
+AttachSpec("~/github/CHIMP/CHIMP.spec");
 
 SetVerbose("EndoFind", 0);
 SetVerbose("CurveRec", 0);
@@ -8,6 +9,7 @@ F := RationalsExtra(prec);
 //P3<x,y,z,w> := ProjectiveSpace(F, 3);
 R<x> := PolynomialRing(F);
 
+// TODO: Compare dim of geometric endomorphism algebra with dimension given by Sato-Tate group
 file := Open("filtered2.txt","r");
 eof := false;
 while not eof do
@@ -17,8 +19,8 @@ while not eof do
     break;
   end if;
 
-  line *:=";";
-  cs_list := eval line
+  line := "cs_list := "*line*"; return cs_list;";
+  cs_list := eval line;
   f, h := Explode([R!el : el in cs_list]);
   X := HyperellipticCurve(f,h);
 
@@ -34,21 +36,31 @@ while not eof do
 
   time P := PeriodMatrix(X);
 
-  print "";
-  print "Endomorphism lattice:";
-  time lat := HeuristicEndomorphismLattice(X);
-  print lat;
+  try 
+    print "";
+    print "Endomorphism lattice:";
+    time lat := HeuristicEndomorphismLattice(X);
+    print lat;
 
-  print "";
-  print "Endomorphisms over base:";
-  print HeuristicEndomorphismDescription(X);
+    print "";
+    print "Endomorphisms over base:";
+    print HeuristicEndomorphismDescription(X);
 
-  print "";
-  print "Endomorphisms over closure:";
-  print HeuristicEndomorphismDescription(X : Geometric := true);
+    print "";
+    print "Endomorphisms over closure:";
+    descript := HeuristicEndomorphismDescription(X : Geometric := true);
+    print descript;
+    if not "M_2 (QQ)" in descript then
+      print "Non-split example found!";
+      Write("interesting-g2.txt", Sprintf("%m",X));
+    end if;
 
-  print "";
-  print "Decomposition:";
-  dec := HeuristicDecomposition(X);
-  print dec;
+    print "";
+    print "Decomposition:";
+    dec := HeuristicDecomposition(X);
+    print dec;
+  catch e
+    Write("g2-errors.txt", Sprintf("%m",X));
+    Write("g2-errors.txt", Sprintf("%m",e`Object));
+  end try;
 end while;
