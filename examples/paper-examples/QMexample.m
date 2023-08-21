@@ -23,9 +23,6 @@ Sch:=Scheme(P4, [Ig, TSpace]);
 print "looking for points on Igusa quartic";
 points := PointSearch(Sch, 500);
 L := BaseRing(U0);
-correctV :=0;
-falseV := 0;
-bad_Vs := [];
 print "looping over points found";
 for loo in [1..500] do
   printf "curve index = %o\n", loo;
@@ -59,51 +56,50 @@ for loo in [1..500] do
   print EndJ2, loo;
   print "\n";
   */
-//end for;
 
-R:= Parent(f2);      
-IgusaInvariants(f2, R!0: normalize:=true);
-S, W:=IgusaInvariants(f2, R!0: normalize:=true);
-S:=[Rationals()!s : s in S];
+  R:= Parent(f2);      
+  IgusaInvariants(f2, R!0: normalize:=true);
+  S, W:=IgusaInvariants(f2, R!0: normalize:=true);
+  S:=[Rationals()!s : s in S];
 
-X1 := HyperellipticCurve(f);
-X2 := HyperellipticCurveFromIgusaInvariants(S);
-f2Q, g := HyperellipticPolynomials(X2);
-f2Q := EvenModel(f2Q);
-X2 := HyperellipticCurve(f2Q);
+  X1 := HyperellipticCurve(f);
+  X2 := HyperellipticCurveFromIgusaInvariants(S);
+  f2Q, g := HyperellipticPolynomials(X2);
+  f2Q := EvenModel(f2Q);
+  X2 := HyperellipticCurve(f2Q);
+  /*
+  if Degree(f2Q) ne 6 then
+    f2Q := x*Reverse(f2Q);
+  end if;
+  */
+
+  /*
+  bool, c := IsQuadraticTwist(BaseChange(X2, L), HyperellipticCurve(f2));
+  twistX2:= HyperellipticCurve(c*f2);
+  bool2, phi := IsIsomorphic(twistX2 , BaseChange(X2, L));
+
+  roots_f2 := [phi(twistX2![r, 0])[1] : r in ([L!0,1] cat ros)] cat [phi(twistX2![1,0,0])[1]];
+
+  RS1 := RiemannSurface(f, 2: Precision:= 20); RS2 := RiemannSurface(f2Q, 2: Precision:= 20);
+
+  V:= findV(RS1, RS2, roots_f2 );
+
+  P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
+  P := DiagonalJoin(P1, P2);
+  Q := QFromPVFor22(P, V);
+  */
+end for;
+
 /*
-if Degree(f2Q) ne 6 then
-  f2Q := x*Reverse(f2Q);
-end if;
+prec := 300;
+F := RationalsExtra(prec);
+P3<x,y,z,w> := ProjectiveSpace(F, 3);
+
+f1 := x^2 + 28/5*x*y + 18/5*y^2 - 224/5*z^2 + 102/5*z*w - 33/10*w^2;
+f2 := -27/226*x*y^2 - 205/1808*x*z^2 + 15/113*x*z*w - 185/3616*x*w^2 - 39/452*y^3 + y*z^2 - 271/452*y*z*w + 17/452*y*w^2;
+X := Curve(P3, [f1, f2]);
 */
 
-
-
-bool, c := IsQuadraticTwist(BaseChange(X2, L), HyperellipticCurve(f2));
-twistX2:= HyperellipticCurve(c*f2);
-bool2, phi := IsIsomorphic(twistX2 , BaseChange(X2, L));
-
-roots_f2 := [phi(twistX2![r, 0])[1] : r in ([L!0,1] cat ros)] cat [phi(twistX2![1,0,0])[1]];
-
-RS1 := RiemannSurface(f, 2: Precision:= 20); RS2 := RiemannSurface(f2Q, 2: Precision:= 20);
-
-V:= findV(RS1, RS2, roots_f2 );
-
-P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
-P := DiagonalJoin(P1, P2);
-Q := QFromPVFor22(P, V);
-w1, w2 := SplitBigPeriodMatrix(Q);
-tau := w1^(-1) *w2;
-err := Abs(SchottkyModularForm(tau : prec := 20));
-printf "error = %o\n", err;
-if err gt 10^(-20) then
-  Append(~bad_Vs, loo);
-  falseV+:= 1;
-else
-  correctV+:= 1;
-end if;
-end for;
-printf "# bad Vs = %o\n", falseV;
 /*
 Vs := AllVs2For22();
 P := DiagonalJoin(P1, P2);
