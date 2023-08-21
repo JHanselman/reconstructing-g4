@@ -1,11 +1,13 @@
 {
   auxiliary.m
   azygetic.m
+  fast_theta.m
+  gluingfuncs.m
+  igusa_quartic.m
   reconstruction.m
   rosenhain.m
   schottky.m
   signs.m
   theta.m
-  fast_theta.m
 }
 
