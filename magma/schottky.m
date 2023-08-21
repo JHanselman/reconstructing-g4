@@ -42,18 +42,21 @@ intrinsic SchottkyModularForm(tau::AlgMatElt : prec := -1) -> Any
 
   z := Eltseq(z);
   */
+
+  tau_prec := MatrixAlgebra(C, Nrows(tau))!tau;
+
   for m in M1 do
-    pi1 := pi1*Theta(m, z, tau);
+    pi1 := pi1*Theta(m, z, tau_prec);
     //pi1 := pi1*Theta(z, tau : char := m, prec := prec);
   end for;
 
   for m in M2 do
-    pi2 := pi2*Theta(m, z, tau);
+    pi2 := pi2*Theta(m, z, tau_prec);
     //pi2 := pi2*Theta(z, tau : char := m, prec := prec);
   end for;
 
   for m in M3 do
-    pi3 := pi3*Theta(m, z, tau);
+    pi3 := pi3*Theta(m, z, tau_prec);
     //pi3 := pi3*Theta(z, tau : char := m, prec := prec);
   end for;
 
