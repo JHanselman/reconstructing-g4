@@ -519,7 +519,7 @@ intrinsic SiegelReduction(tau::AlgMatElt) -> Any
   while e le 1 do
     Y := Imaginary(tau);
     Y := (Y + Transpose(Y))/2; // make sure matrix is symmetric
-    T := Cholesky(Imaginary(tau));
+    T := Cholesky(Y);
     T, U := LLL(T);
     Tt := Transpose(T);
 
@@ -544,7 +544,9 @@ intrinsic SiegelReduction(tau::AlgMatElt) -> Any
     Tt := Transpose(T);
     Y := T*Tt;
 
-    Gamma := VerticalJoin(HorizontalJoin(U,ZeroMatrix(ZZ,g)), HorizontalJoin(ZeroMatrix(ZZ,g), (Transpose(U)^-1)))*Gamma;
+    //Gamma := VerticalJoin(HorizontalJoin(U,ZeroMatrix(ZZ,g)), HorizontalJoin(ZeroMatrix(ZZ,g), (Transpose(U)^-1)))*Gamma;
+    R := BaseRing(Parent(U));
+    Gamma := VerticalJoin(HorizontalJoin(U,ZeroMatrix(R,g)), HorizontalJoin(ZeroMatrix(R,g), (Transpose(U)^-1)))*Gamma;
     tau := U*Real(tau)*Transpose(U) + I*Y;
     X := Real(tau);
 
