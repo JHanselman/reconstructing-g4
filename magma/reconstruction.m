@@ -8,6 +8,7 @@
  *  See LICENSE.txt for license details.
  */
 
+declare verbose Reconstruction, 1;
 
 import "rosenhain.m": FindDelta, ComputeGamma, EtaFunction, TakaseQuotient;
 
@@ -903,13 +904,17 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
   //tau := SmallPeriodMatrix(Pi);
+  vprint Reconstruction: "Siegel reducing";
   tau_red, Q := SiegelReduction(tau);
   Q0 := ChangeRing(Q,BaseRing(Pi));
   Pi := Pi*Q0;
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
+  vprint Reconstruction: "Computing thetas";
   thetas := ComputeThetas(tau);
+  vprint Reconstruction: "Reconstructing curve over CC";
   quadric, cubic := Explode(ReconstructCurveG4(thetas));
+  vprint Reconstruction: "Trying to recognize over QQ";
   CC4 := Parent(quadric);
   CC := BaseRing(CC4);
   X:=Matrix(CC4, 4,1, [CC4.i: i in [1..4]]);
@@ -923,6 +928,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
 
   TTB:=[];
   
+  vprint Reconstruction: "Computing tritangents";
   for c in tritangentbasis do
     chara := [Integers()!v : v in Eltseq(c)];
     chara := [chara[1..4], chara[5..8]];
@@ -933,6 +939,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   D := DiagonalMatrix(Eltseq(Vector(TTB[5]) * (TtoS)^-1));
   M := TtoS^-1 * D^-1;
 
+  vprint Reconstruction: "Rescaling equations";
   quadric:=Evaluate(quadric, Eltseq(ChangeRing(Inverse(M),CC4)*X));
   quadric_C:=quadric/LeadingCoefficient(quadric);
   cubic_C:=Evaluate(cubic, Eltseq(ChangeRing(Inverse(M), CC4)*X));
@@ -970,6 +977,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   cubic_C := &+[w[i] * h(mons3[i]) : i in [1..#mons3]];
   cubic_Q:= R!0;
   
+  vprint Reconstruction: "Trying to recognize coefficients over QQ";
   for m in mons3 do
     coeff_C := MonomialCoefficient(cubic_C, h(m));
     coeff_Q := BestApproximation(Real(coeff_C), 1000000);
