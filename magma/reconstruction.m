@@ -904,7 +904,8 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   tau := Pi1^-1*Pi2;
   //tau := SmallPeriodMatrix(Pi);
   tau_red, Q := SiegelReduction(tau);
-  Pi := Pi*Q;
+  Q0 := ChangeRing(Q,BaseRing(Pi));
+  Pi := Pi*Q0;
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
   thetas := ComputeThetas(tau);
