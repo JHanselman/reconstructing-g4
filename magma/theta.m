@@ -561,7 +561,7 @@ intrinsic SiegelReduction(tau::AlgMatElt) -> Any
     e := Abs(tau[1,1]);
     vprintf Theta: "Now e = %o\n", e;
     if e gt 1 then
-      return tau, Gamma;
+      return tau, MatrixRing(Integers(),g)!Gamma;
     else
       Gamma := quasi_inversion*Gamma;
       tau := (Aq*tau + Bq)*((Cq*tau + Dq)^-1);
