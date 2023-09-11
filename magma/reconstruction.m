@@ -902,8 +902,12 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   QQ := Rationals();
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
-//tau := SmallPeriodMatrix(Pi);
-thetas := ComputeThetas(tau);
+  //tau := SmallPeriodMatrix(Pi);
+  tau_red, Q := SiegelReduction(tau);
+  Pi := Pi*Q;
+  Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
+  tau := Pi1^-1*Pi2;
+  thetas := ComputeThetas(tau);
   quadric, cubic := Explode(ReconstructCurveG4(thetas));
   CC4 := Parent(quadric);
   CC := BaseRing(CC4);
