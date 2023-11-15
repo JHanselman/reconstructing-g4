@@ -1,100 +1,106 @@
 AttachSpec("../../magma/spec");
-load "Galois.m";
-
-function TakaseQuotientSq(theta4, eta, k, l, m)
-g := #Eltseq(eta[1]) div 2;
-U := {1,3,5};
-Bm := { 1..2*g+1 }; L := [ bp : bp in (Bm diff { k, l, m }) ];
-V := { L[i]: i in [1..g-1] }; W := { L[i]: i in [g..2*(g-1)] };
-num1 := theta4[TCharToIndex(EtaValue(eta, U sdiff (V join { k, l })))];
-num2 := theta4[TCharToIndex(EtaValue(eta, U sdiff (W join { k, l })))];
-den1 := theta4[TCharToIndex( EtaValue(eta, U sdiff (V join { k, m })))];
-den2 := theta4[TCharToIndex(EtaValue(eta, U sdiff (W join { k, m })))];
-return (num1*num2)/(den1*den2);
-end function;
-
-
-
-function HyperellipticCurveFromTheta4(theta4)
-g:=2;
-L:=Parent(theta4[1]);
-eta:=EtaFunction0(2);
-ros := [ Sqrt(TakaseQuotientSq(theta4, eta, 1, l, 2)) : l in [3..2*g+1] ];
-U:={1,3,5};
-R<X>:=PolynomialRing(L);
-for loo in [0..7] do
-bin:=Intseq(loo,2,3);
-rostest:= [ros[water]*(-1)^bin[water]: water in [1..3]];
-rootstest := [0,1] cat [-ro/(ro-2): ro in rostest] cat [-1];
-ftest:=X*(X-1)*&*[(X-L!ro): ro in rostest];
-//print IgusaInvariantsEqual(IgusaInvariants(f), IgusaInvariants(ftest));
-theta4test:= [L!0: i in [1..16]];
-for i in [1..5] do
-        for j in [i+1..5] do
-        T := {i,j, 6};
-        Tcomp := {1..6} diff T;
-        S := T sdiff U;
-        sign := (-1)^#(S meet U);
-        cha := EtaValue(eta, Setseq(S));
-        theta4test[TCharToIndex(cha)] := sign * &*[ &*[(rootstest[nu]-rootstest[mu])^(-1): nu in T]: mu in Tcomp];
-        end for;
-end for;
-if &and[theta4test[i]*theta4[1] eq theta4[i]*theta4test[1]: i in [1..16]] then
-return ftest;
-end if;
-end for;
-
-end function;
-
-
-
-
+SetDebugOnError(true);
+//load "Galois.m";
+//load "gluingfuncs.m";
 
 R<x>:=PolynomialRing(Rationals());
-f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
-Ig, Poi, U := IgusaTwist(x*Reverse(f));
+//f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
+//f :=(x^2-2)*(x-3)*(x-4)*(x-5)*(x-6);
+f := (x-1)*(x-2)*(x-3)*(x-4)*(x-5)*(x-6);
+f := EvenModel(f);
+/*
+if Degree(f) ne 6 then
+  f := x*Reverse(f);
+end if;
+*/
+
+Ig, Poi, U0 := IgusaTwist(f);
 R4:=PolynomialRing(Rationals(),5);
 Ig:=R4!Ig;
 TSpace := &+[Evaluate(Derivative(Ig, i), Poi) * R4.i: i in [1..5]];
 P4:=ProjectiveSpace(R4);
 Sch:=Scheme(P4, [Ig, TSpace]);
+print "looking for points on Igusa quartic";
 points := PointSearch(Sch, 500);
-L := BaseRing(U);
-//for loo in [1..#points] do
-loo:= 142;
-Poi2:=Eltseq(points[loo]);
-	TSpace2 := &+[Evaluate(Derivative(Ig, i), Poi2) * R4.i: i in [1..5]];
-	if Evaluate(TSpace2, Poi) eq 0 then
-		continue;
-	end if;
-	theta41part := Eltseq(Vector(L, Poi2)*U);
-	vecs := IgusaCoordinates();
-	theta41 := [&+[vec[i]* theta41part[i]: i in [1..5]]: vec in vecs];
-	if #[th: th in theta41| th eq 0] gt 6 then
-		continue;
-	end if;
-	f2 := HyperellipticCurveFromTheta4(theta41);
-	pl:=InfinitePlaces(L)[1];
-	S<X,Y>:=PolynomialRing(L,2);
-	equ := Y^2- Evaluate(f2, X);
-	Surf:= RiemannSurface(equ, pl: Precision:= 80);
-	Pi := BigPeriodMatrix(Surf);
-	EndJ2:= EndomorphismAlgebra(Pi);
-	print EndJ2, loo;
-	print "\n";
-//end for;
+L := BaseRing(U0);
+print "looping over points found";
+for loo in [1..500] do
+  printf "curve index = %o\n", loo;
+  Poi2:=Eltseq(points[loo]);
+  TSpace2 := &+[Evaluate(Derivative(Ig, i), Poi2) * R4.i: i in [1..5]];
+  if Evaluate(TSpace2, Poi) eq 0 then
+    continue;
+  end if;
+  theta41part := Eltseq(Vector(L, Poi2)*U0);
+  vecs, equfin, xi := IgusaCoordinates();
+  evs := [Evaluate(x, theta41part) : x in xi];
+  if #Seqset(evs) ne #evs then
+    print "Found multiple gluings!";
+    printf "point: %o\n", points[loo];
+    continue;
+  end if;
+  theta41 := [&+[vec[i]*theta41part[i]: i in [1..5]]: vec in vecs];
+  if #[th: th in theta41| th eq 0] gt 6 then
+      continue;
+  end if;
+  f2, ros := HyperellipticCurveFromTheta4(theta41);
+  pl:=InfinitePlaces(L)[1];
+  S<X,Y>:=PolynomialRing(L,3);
+  equ := Y^2- Evaluate(f2, X);
 
-R:= Parent(f2);      
-IgusaInvariants(f2, R!0: normalize:=true);
-S, W:=IgusaInvariants(f2, R!0: normalize:=true);
-S:=[Rationals()!s : s in S];
 
-X1 := HyperellipticCurve(f);
-X2 := HyperellipticCurveFromIgusaInvariants(S);
-f2, g := HyperellipticPolynomials(X2);
+  /*
+  Surf:= RiemannSurface(equ, pl: Precision:= 80);
+  Pi := BigPeriodMatrix(Surf);
+  EndJ2:= EndomorphismAlgebra(Pi);
+  print EndJ2, loo;
+  print "\n";
+  */
 
-RS1 := RiemannSurface(f, 2: Precision:= 100); RS2 := RiemannSurface(f2, 2: Precision:= 100);
-P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
+  R:= Parent(f2);      
+  IgusaInvariants(f2, R!0: normalize:=true);
+  S, W:=IgusaInvariants(f2, R!0: normalize:=true);
+  S:=[Rationals()!s : s in S];
+
+  X1 := HyperellipticCurve(f);
+  X2 := HyperellipticCurveFromIgusaInvariants(S);
+  f2Q, g := HyperellipticPolynomials(X2);
+  f2Q := EvenModel(f2Q);
+  X2 := HyperellipticCurve(f2Q);
+  /*
+  if Degree(f2Q) ne 6 then
+    f2Q := x*Reverse(f2Q);
+  end if;
+  */
+
+  /*
+  bool, c := IsQuadraticTwist(BaseChange(X2, L), HyperellipticCurve(f2));
+  twistX2:= HyperellipticCurve(c*f2);
+  bool2, phi := IsIsomorphic(twistX2 , BaseChange(X2, L));
+
+  roots_f2 := [phi(twistX2![r, 0])[1] : r in ([L!0,1] cat ros)] cat [phi(twistX2![1,0,0])[1]];
+
+  RS1 := RiemannSurface(f, 2: Precision:= 20); RS2 := RiemannSurface(f2Q, 2: Precision:= 20);
+
+  V:= findV(RS1, RS2, roots_f2 );
+
+  P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
+  P := DiagonalJoin(P1, P2);
+  Q := QFromPVFor22(P, V);
+  */
+end for;
+
+/*
+prec := 300;
+F := RationalsExtra(prec);
+P3<x,y,z,w> := ProjectiveSpace(F, 3);
+
+f1 := x^2 + 28/5*x*y + 18/5*y^2 - 224/5*z^2 + 102/5*z*w - 33/10*w^2;
+f2 := -27/226*x*y^2 - 205/1808*x*z^2 + 15/113*x*z*w - 185/3616*x*w^2 - 39/452*y^3 + y*z^2 - 271/452*y*z*w + 17/452*y*w^2;
+X := Curve(P3, [f1, f2]);
+*/
+
+/*
 Vs := AllVs2For22();
 P := DiagonalJoin(P1, P2);
 Qs := [];
@@ -115,6 +121,7 @@ for i->Q in Qs do
   end if;
 end for;
 
+loo = 67, 121 are wrong
 
 V := Vs[120];
 
@@ -154,6 +161,27 @@ result_C:=Curve(Scheme(AffineSpace(P2),plane_eq));
 result_P := BigPeriodMatrix(RiemannSurface(plane_eq:Precision:=500));
 EndomorphismAlgebra(result_P);
 
+/*
+Found multiple gluings!
+point: (-11/28 : -11/24 : 125/336 : -1/336 : 1)
+Found multiple gluings!
+point: (29/98 : -157/98 : 40/49 : 3/392 : 1)
+Found multiple gluings!
+point: (-1/28 : -29/56 : 5/112 : 3/112 : 1)
+
+Poi2 := [-11/28, -11/24, 125/336, -1/336,1];  
+
+Result:
+
+238
+1.99692468311987660851692368119E-28
+
+
+552
+6.94746444747365946288892131774E-30
+
+
+*/
 
 /*
 [ (-1/4 : -9/20 : -9/20 : 1/40 : 1), (-17/20 : 3/20 : 3/80 : -1/80 : 1), (-9/40 

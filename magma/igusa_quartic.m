@@ -1,10 +1,3 @@
-/*
-R<y0,y1,y2,y3,y4> := PolynomialRing(QQ,5);
-f := (y0*y1 + y0*y2 + y1*y2 - y3*y4)^2 - 4*y0*y1*y2*(y0 + y1 + y2 + y3 + y4);
-*/
-
-// Thm 10.3.18, p. 543
-
 function EtaFunction0(g);
 ZZ:=Integers();
 zer:=ZeroMatrix(ZZ, g,g);
@@ -23,262 +16,242 @@ end function;
 
 
 
-
 /* Value of eta on a set of branch points */
 function EtaValue(eta, S)
 g := #Eltseq(eta[1]) div 2;
 if #S eq 0 then
-    return Transpose(Matrix(Integers(), [[ 0 : i in [1..2*g] ]]));
+    return [[ 0 : i in [1..g] ], [ 0 : i in [1..g] ]];
 end if;
 res:=Eltseq(&+[ eta[i] : i in S ]);
 return [res[1..g], res[g+1..2*g]];
 end function;
 
+//f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
 
-F<nu> := CyclotomicField(5);
-R<x> := PolynomialRing(F);
-f := &*[x-i: i in [0..5]];
-roots := [el[1] : el in Roots(f)];
-U:={1,3,5};
-eta := EtaFunction0(2);
+function ComputeGaloisAction(f)
+  
+  L := SplittingField(f);
+  M, mM := OptimisedRepresentation(L);
+  G,S, phi := AutomorphismGroup(M);
+  gens := Setseq(Generators(G));
+  roots := [r[1]: r in Roots(f, L)];
+  Sort(~roots);
+  ActionOnTheta := [];
+  signs := [];
+  Lt := [6,9,12,15,16];
+  U:={1,3,5};
+  eta := EtaFunction0(2);
+  sigmas:=[];
+  for g in gens do
+    sigma_g := mM * phi(g) * mM^(-1);
+    Append(~sigmas, sigma_g);    
+    g_roots := [sigma_g(r): r in roots];
+    indices := [1..#roots];
+    ParallelSort(~g_roots, ~indices);
+    if #indices eq 5 then
+      Append(~indices, 6);
+    end if;
+    
+    Append(~ActionOnTheta, [0,0,0,0,0]);
+    Append(~signs, [0,0,0,0,0]);
 
-theta4 := [F!0: i in [1..16]];
-for i in [1..5] do
-	for j in [i+1..5] do
-	T := {i,j, 6};	
-	Tcomp := {1..6} diff T;
+    for i in [1..5] do
+      for j in [i+1..5] do
+        T := {i,j, 6};	
         S := T sdiff U;
-	sign := (-1)^#(S meet U);
-	cha := EtaValue(eta, Setseq(S));
-	theta4[TCharToIndex(cha)] := sign * &*[ &*[(roots[nu]-roots[mu])^(-1): nu in T]: mu in Tcomp];
-	end for;
-end for;
-	
-M := ZeroMatrix(Rationals(), 5, 16);
-M[1, 8]:=1;
-M[1, 12]:=-1;
-M[1, 15]:=1;
-M[1, 9]:=-1;
-M[2, 16]:=1;
-M[2, 1]:=-1;
-M[2, 6]:=-1;
-M[2, 12]:=-1;
-M[3, 6]:=1;
-M[3, 2]:=-1;
-M[3, 15]:=-1;
-M[3, 3]:=1;
-M[4, 4]:=1;
-M[4, 16]:=-1;
-M[4, 9]:=1;
-M[4, 3]:=-1;
-M[4, 3]:=1;
-M[5, 4]:=1;
-M[5, 8]:=-1;
-M[5, 1]:=1;
-M[5, 2]:=-1;
-Ech := EchelonForm(M);
-pivots := [Min([i: i in [1..16]| Ech[j,i] ne 0  ]): j in [1..5]];
-even := [ 1, 2, 3, 4, 6, 8, 9, 12, 15, 16 ];
-R16 := PolynomialRing(Rationals( ), 16);
-t8 := &+[R16.i^2: i in even];
-t16 := &+[R16.i^4: i in even];
-equ := t8^2-4*t16;
+        cha := EtaValue(eta, Setseq(S));
+        cha_i := TCharToIndex(cha);
+        if cha_i in Lt then
+          pos := Position(Lt, cha_i); 
+          Tnew := {indices[i], indices[j], indices[6]};
+          Snew := Tnew sdiff U;
+          signswitch:=(-1)^( #(S meet U)- #(Snew meet U));
+          chanew := EtaValue(eta, Setseq(Snew));
+          cha_inew := TCharToIndex(chanew);
+          ActionOnTheta[#ActionOnTheta][pos]:= cha_inew;
+          signs[#ActionOnTheta][pos]:= signswitch;
+        end if;
+      end for;
+    end for;
+    
+  end for;
+  return ActionOnTheta,signs,  sigmas;
+end function;
 
-subs := Setseq(MonomialsOfDegree(R16,1)); 
+intrinsic IgusaCoordinates() -> Any
+  {}
+  M := ZeroMatrix(Rationals(), 5, 16);
+  M[1, 8]:=1;
+  M[1, 12]:=-1;
+  M[1, 15]:=1;
+  M[1, 9]:=-1;
+  M[2, 16]:=1;
+  M[2, 1]:=-1;
+  M[2, 6]:=-1;
+  M[2, 12]:=-1;
+  M[3, 6]:=1;
+  M[3, 2]:=-1;
+  M[3, 15]:=-1;
+  M[3, 3]:=1;
+  M[4, 4]:=1;
+  M[4, 16]:=-1;
+  M[4, 9]:=1;
+  M[4, 3]:=-1;
+  M[4, 3]:=1;
+  M[5, 4]:=1;
+  M[5, 8]:=-1;
+  M[5, 1]:=1;
+  M[5, 2]:=-1;
+  Ech := EchelonForm(M);
+  pivots := [Min([i: i in [1..16]| Ech[j,i] ne 0  ]): j in [1..5]];
+  even := [ 1, 2, 3, 4, 6, 8, 9, 12, 15, 16 ];
+  R16 := PolynomialRing(Rationals( ), 16);
+  t8 := &+[R16.i^2: i in even];
+  t16 := &+[R16.i^4: i in even];
+  equ := t8^2-4*t16;
 
-for i in [1..5] do
-piv:= pivots[i];
-subs[piv]:= -&+[Ech[i, j]*R16.j: j in [piv+1..16]];
-end for;
-equnew := Evaluate(equ, subs);
-R4 := PolynomialRing(Rationals(),5);
-subsfin := [R4!0: i in [1..16]];
-subsfin[6] := R4.1;
-subsfin[9] := R4.2;
-subsfin[12] := R4.3;
-subsfin[15] := R4.4;
-subsfin[16] := R4.5;
-equfin:=Evaluate(equnew, subsfin);
+  subs := Setseq(MonomialsOfDegree(R16,1));
 
-for loo in [0..7] do
-bin:=Intseq(loo,2,3);
-rostest:= [ros[water]*(-1)^bin[water]: water in [1..3]];
-rootstest := [0,1] cat [-ro/(ro-2): ro in rostest] cat [-1];
-ftest:=x*(x-1)*&*[(x-Rationals()!ro): ro in rostest];
-//print IgusaInvariantsEqual(IgusaInvariants(f), IgusaInvariants(ftest));
-theta4test:= [Rationals()!0: i in [1..16]];
-for i in [1..5] do
-        for j in [i+1..5] do
+  for i in [1..5] do
+  piv:= pivots[i];
+  subs[piv]:= -&+[Ech[i, j]*R16.j: j in [piv+1..16]];
+  end for;
+  equnew := Evaluate(equ, subs);
+
+
+  R4 := PolynomialRing(Rationals(),5);
+  subsfin := [R4!0: i in [1..16]];
+  subsfin[6] := R4.1;
+  subsfin[9] := R4.2;
+  subsfin[12] := R4.3;
+  subsfin[15] := R4.4;
+  subsfin[16] := R4.5;
+  equfin:=Evaluate(equnew, subsfin);
+
+  evals:=[Evaluate(sub, subsfin): sub in subs];
+  vecs := [Vector([MonomialCoefficient(ev, R4.i): i in [1..5]]): ev in evals];
+  t6 := R16.1;
+  t7 := R16.6;
+  t8 := R16.2;
+  t9 := R16.3;
+  t10 := R16.4;
+  x1 := Evaluate(t6 - t7 + t9 + 2*t10, evals);
+  x2 := Evaluate(-2* t6 - t7 + t9 - t10, evals);
+  x3 := Evaluate(t6 - t7 - 2*t9 - t10, evals);
+  x4 := Evaluate(t6 + 2*t7 - 3*t8 + t9 + 2*t10, evals);
+  x5 := Evaluate(-2*t6 - t7 + 3*t8 - 2*t9 - t10, evals);
+  x6 := Evaluate(t6 + 2*t7 + t9 - t10, evals);
+  xi:=[x1,x2,x3,x4,x5,x6];
+
+  return vecs, equfin, xi;
+  end intrinsic;
+
+  function ComputeCocycle(f)
+      ActionOnTheta, signs, sigmas := ComputeGaloisAction(f);
+      vecs, Igusa := IgusaCoordinates();
+      return [Transpose(Matrix([signs[j][i] * vecs[ActionOnTheta[j][i]]: i in [1..5]]  )): j in [1..#ActionOnTheta]], sigmas, Igusa;
+  end function;
+
+  intrinsic IgusaTwist(f::RngUPolElt) -> Any
+    {}
+      coc, sigmas, Igusa := ComputeCocycle(f);
+      if #sigmas eq 0 then
+        L := Rationals();
+        U0 := IdentityMatrix(L,5);
+        Igtest := Igusa;
+      else
+        L := Domain(sigmas[1]);
+        coc := [ChangeRing(co, L): co in coc];
+        cocV := [BlockMatrix(5,5,[RepresentationMatrix(a): a in Eltseq(co)]): co in coc];
+        V, m := KSpace(L, Rationals());
+        n:= Dimension(V);
+        sigmasV:= [m^(-1) * sig * m: sig in sigmas];
+        Matsigmas := [Transpose(Matrix( [ sig(V.i): i in [1..n]]  )): sig in sigmasV];
+        Matsigmas5 := [DiagonalJoin([mat: i in [1..5]]): mat in Matsigmas];
+        IntKer := &meet[Kernel(Transpose(Matsigmas5[i])^(-1)-cocV[i]): i in [1..#coc]];
+        U0 := Matrix([ [Inverse(m)(V!(Eltseq(b)[n*i+1..n*(i+1)])): i in [0..4]]:      b in Basis(IntKer)]);
+
+        R4 := PolynomialRing(L, 5);
+        UR4:=ChangeRing(U0, R4);
+        Igusa:=Evaluate(Igusa, [R4.i: i in [1..5]]);
+        X := Matrix(R4,5,1, [R4.i: i in [1..5]]);
+        Igtest:=Evaluate(Igusa, Eltseq(Transpose(UR4)*X));
+      end if;
+
+      roots := Roots(f, L);
+      roots := [ro[1]: ro in roots];
+      Sort(~roots);
+      U:={1,3,5};
+      eta := EtaFunction0(2);
+
+    theta4 := [L!0: i in [1..16]];
+
+    for i in [1..5] do
+      for j in [i+1..5] do
+        T := {i,j, 6};
+        Tcomp := {1..6} diff T;
+        S := T sdiff U;
+        sign := (-1)^#(S meet U);
+        cha := EtaValue(eta, Setseq(S));
+        theta4[TCharToIndex(cha)] := sign * &*[ &*[(roots[nu]-roots[mu])^(-1): nu in T]: mu in Tcomp];
+      end for;
+    end for;
+      Point :=[ theta4[j]: j in [6,9,12,15,16]];
+      PointOnTwist:=[el: el in Eltseq(Vector(Point)*U0^(-1))];
+      PointOnTwist:=[Rationals()!(el/PointOnTwist[1]): el in PointOnTwist];
+      return Igtest, PointOnTwist, U0;
+end intrinsic;
+
+function TakaseQuotientSq(theta4, eta, k, l, m)
+  g := #Eltseq(eta[1]) div 2;
+  U := {1,3,5};
+  Bm := { 1..2*g+1 }; L := [ bp : bp in (Bm diff { k, l, m }) ];
+  V := { L[i]: i in [1..g-1] }; W := { L[i]: i in [g..2*(g-1)] };
+  num1 := theta4[TCharToIndex(EtaValue(eta, U sdiff (V join { k, l })))];
+  num2 := theta4[TCharToIndex(EtaValue(eta, U sdiff (W join { k, l })))];
+  den1 := theta4[TCharToIndex( EtaValue(eta, U sdiff (V join { k, m })))];
+  den2 := theta4[TCharToIndex(EtaValue(eta, U sdiff (W join { k, m })))];
+  return (num1*num2)/(den1*den2);
+end function;
+
+intrinsic HyperellipticCurveFromTheta4(theta4::SeqEnum) -> Any
+  {}
+  g:=2;
+  L:=Parent(theta4[1]);
+  eta:=EtaFunction0(2);
+  //ros := [ Sqrt(TakaseQuotientSq(theta4, eta, 1, l, 2)) : l in [3..2*g+1] ];
+  ros := [];
+  for l in [3..2*g+1] do
+    bool, s := IsSquare(TakaseQuotientSq(theta4, eta, 1, l, 2));
+    assert bool;
+    Append(~ros,s);
+  end for;
+  U:={1,3,5};
+  R<X>:=PolynomialRing(L);
+  for loo in [0..7] do
+    bin:=Intseq(loo,2,3);
+    rostest:= [ros[water]*(-1)^bin[water]: water in [1..3]];
+    rootstest := [0,1] cat [-ro/(ro-2): ro in rostest] cat [-1];
+    if #Seqset(rootstest) ne #rootstest then
+      print "found roots with opposite signs";
+      continue;
+    end if; 
+    ftest:=X*(X-1)*&*[(X-L!ro): ro in rostest];
+    //print IgusaInvariantsEqual(IgusaInvariants(f), IgusaInvariants(ftest));
+    theta4test:= [L!0: i in [1..16]];
+    for i in [1..5] do
+      for j in [i+1..5] do
         T := {i,j, 6};
         Tcomp := {1..6} diff T;
         S := T sdiff U;
         sign := (-1)^#(S meet U);
         cha := EtaValue(eta, Setseq(S));
         theta4test[TCharToIndex(cha)] := sign * &*[ &*[(rootstest[nu]-rootstest[mu])^(-1): nu in T]: mu in Tcomp];
-        end for;
-end for;
-print &and[theta4test[i]*theta42[1] eq theta42[i]*theta4test[1]: i in [1..16]];
-end for;
+      end for;
+    end for;
+    if &and[theta4test[i]*theta4[1] eq theta4[i]*theta4test[1]: i in [1..16]] then
+      return ftest, rostest;
+    end if;
+  end for;
+end intrinsic;
 
-/*
- * Two gluable curves:
- * y^2= x^6 - 15*x^5 + 85*x^4 - 225*x^3 + 274*x^2 - 120*x
- * y^2=x^5 - 5/3*x^4 + 35/48*x^3 - 5/96*x^2 - 1/96*x
- take the 7th maximal isotropic subgroup
- * */
-
-
-/*
-SpecialPlanes(roots);
-[[MonomialCoefficient(p,m) : m in MonomialsOfDegree(Parent(p),1)] : p in planes];
-*/
-
-// copypasta
-/*
-F<nu> := CyclotomicField(5);
-R<x> := PolynomialRing(F);
-f := x^6-x;
-roots := [el[1] : el in Roots(f)];
-AddTwoTorsionPoint(f, roots);
-mp_two := $1;
-AddTwoTorsionPoint(f, roots[1..2]);
-ts := roots[1..2];
-  t1, t2 := Explode(ts);
-  R<x> := Parent(g);
-  k := BaseRing(R);
-  G := (x-t1)*(x-t2);
-  assert g mod G eq 0;
-  H := g div G;
-g := f;
-  R<x> := Parent(g);
-  k := BaseRing(R);
-  G := (x-t1)*(x-t2);
-  assert g mod G eq 0;
-  H := g div G;
-TwoTorsionMatrix(G,H);
-mat_two := $1;
-DiagonalForm(mat_two);
-DiagonalForm;
-Diagonalization;
-DiagonalisingMatrix;
-CharacteristicPolynomial(mat_two);
-Factorization($1);
-mat_two;
-mat_two^2;
-MinimalPolynomial(mat_two);
-DiagonalisingMatrix(mat_two);
-JordanForm(mat_two);
-M := mat_two;
-D, P := JordanForm(M);
-P;
-Determinant(P);
-P*M*(P^-1);
-Binomial(6,2);
-M1 := M;
-ts;
-ts1 := ts;
-ts2 := roots[3..4];
-ts := ts2;
-t1, t2 := Explode(ts);
-  R<x> := Parent(g);
-  k := BaseRing(R);
-  G := (x-t1)*(x-t2);
-  assert g mod G eq 0;
-  H := g div G;
-M2 := TwoTorsionMatrix(G,H);
-M1;
-M2;
-M2^2;
-M1*M2 - M2*M1;
-P*M2*(P^-1);
-IsDiagonal($1);
-DiagonalisingMatrix;
-Eigenspaces(M1);
-Eigenspace;
-Eigenvalues(M1);
-D1 := D;
-P1 := P;
-D2, P2 := JordanForm(M2);
-P2*M1*(P2^-1);
-P1*M2*(P1^-1);
-Diagonalization([M1, M2]);
-Ds, Ps := Diagonalization([M1, M2]);
-Parent(Ps[1]);
-BaseRing($1);
-#Ps;
-P := Ps;
-Parent(P);
-#Ds;
-ts3 := [roots[1], roots[3]];
-ts := ts3;
-assert #ts eq 2;
-  t1, t2 := Explode(ts);
-  R<x> := Parent(g);
-  k := BaseRing(R);
-  G := (x-t1)*(x-t2);
-  assert g mod G eq 0;
-  H := g div G;
-M3 := TwoTorsionMatrix(G,H);
-M3;
-M3^2;
-P;
-Rows(Transpose(P))[1];
-P*M1*(P^-1);
-IsDiagonal($1);
-Rows(Transpose(P^-1))[1];
-v1 := $1;
-v2 := v1*Transpose(M3);
-v2 := v1*Transpose(ChangeRing(M3,BaseRing(Parent(v1)));
-v2 := v1*Transpose(ChangeRing(M3,BaseRing(Parent(v1))));
-ts1;
-ts2;
-ts3;
-ts := [roots[1], roots[5]];
-ts3 := [roots[1], roots[5]];
-assert #ts eq 2;
-  t1, t2 := Explode(ts);
-  R<x> := Parent(g);
-  k := BaseRing(R);
-  G := (x-t1)*(x-t2);
-  assert g mod G eq 0;
-  H := g div G;
-M3 := TwoTorsionMatrix(G,H);
-v2 := v1*Transpose(ChangeRing(M3,BaseRing(Parent(v1))));
-v1;
-v2;
-ts4 := [roots[3], roots[6]];
-ts := ts4;
-assert #ts eq 2;
-  t1, t2 := Explode(ts);
-  R<x> := Parent(g);
-  k := BaseRing(R);
-  G := (x-t1)*(x-t2);
-  assert g mod G eq 0;
-  H := g div G;
-M4 := TwoTorsionMatrix(G,H);
-v3 := v1*Transpose(ChangeRing(M4,BaseRing(Parent(v1))));
-v4 := v1*Transpose(ChangeRing(M3*M4,BaseRing(Parent(v1))));
-M3*M4 - M4*M3;
-A := Transpose(Matrix([Eltseq(el) : el in [v1,v2,v3,v4]]));
-A;
-K := CalculateKummer(f);
-K;
-fK := DefiningEquation(K);
-E := BaseRing(Parent(A));
-E;
-fKE := ChangeRing(fK,E);
-fKE;
-BaseChange(A,Parent(fKE));
-BaseChange(A,MatrixAlgebra(4,Parent(fKE)));
-ChangeRing(A,Parent(fKE));
-A := $1;
-MonomialsOfDegree(Parent(fKE),1);
-SetToSequence($1);
-var_mat := Matrix(4,1,$1);
-A*var_mat;
-new_vars := $1;
-Evaluate(fKE, new_vars);
-Evaluate(fKE, Eltseq(new_vars));
-f_new := $1;
-Monomials(f_new);
-*/

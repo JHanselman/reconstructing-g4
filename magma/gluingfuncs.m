@@ -5054,32 +5054,129 @@ function LiftFF(c, n)
 end function;
 
 
-function QFromPVFor22(P, V)
-/* Creates quotient of abelian variety corresponding to P by symplectic
- * subgroup corresponding to V */
 
-p := Characteristic(BaseRing(V));
-L1 := Lattice(IdentityMatrix(Rationals(), 8));
-M2 := Matrix(Basis(V));
-M2 := Matrix(Rationals(), #Rows(M2), #Rows(Transpose(M2)), [ LiftFF(c, p) : c in Eltseq(M2) ]);
-L2 := Lattice(M2);
-L := L1 + L2;
-T := Matrix(Basis(L));
-
-E1 := StandardSymplecticMatrix(2);
-E2 := StandardSymplecticMatrix(2);
-E3 := DiagonalJoin(E1, E2);
-T1 := Transpose(T);
-E := Transpose(T1)*E3*T1;
-
-E0, T2 := FrobeniusFormAlternating(ChangeRing(p*E, Integers()));
-BT := T1*Transpose(T2);
-
-Q := P*ChangeRing(BT, BaseRing(P));
-//assert IsBigPeriodMatrix(Q);
-return Q;
+function StandardSymplecticMatrix(g)
+        id:=IdentityMatrix(Integers(), g);
+        zer:=ZeroMatrix(Integers(), g,g);
+        J:=BlockMatrix(2,2, [[zer, id], [-id, zer]]);
+ return J;
 
 end function;
 
+intrinsic QFromPVFor22(P::ModMatFldElt, V::ModTupFld)-> Any
+  {Creates quotient of abelian variety corresponding to P by symplectic subgroup corresponding to V}
+
+  p := Characteristic(BaseRing(V));
+  L1 := Lattice(IdentityMatrix(Rationals(), 8));
+  M2 := Matrix(Basis(V));
+  M2 := Matrix(Rationals(), #Rows(M2), #Rows(Transpose(M2)), [ LiftFF(c, p) : c in Eltseq(M2) ]);
+  L2 := Lattice(M2);
+  L := L1 + L2;
+  T := Matrix(Basis(L));
+
+  E1 := StandardSymplecticMatrix(2);
+  E2 := StandardSymplecticMatrix(2);
+  E3 := DiagonalJoin(E1, E2);
+  T1 := Transpose(T);
+  E := Transpose(T1)*E3*T1;
+
+  E0, T2 := FrobeniusFormAlternating(ChangeRing(p*E, Integers()));
+  BT := T1*Transpose(T2);
+
+  Q := P*ChangeRing(BT, BaseRing(P));
+  //assert IsBigPeriodMatrix(Q);
+  return Q;
+end intrinsic;
+
+intrinsic EvenModel(f::RngUPolElt) -> Any
+  {}
+  R<x> := Parent(f);
+  roots := [el[1] : el in Roots(f)];
+  if Degree(f) mod 2 eq 1 then
+    if #roots eq 0 then
+      return R!(x*Reverse(f));
+    else
+      pt := Maximum(roots)+1;
+      //1/(x-pt)
+      return R!(x^(Degree(f)+1)*Evaluate(f, 1/x + pt));
+    end if;
+  end if;
+  return f;
+end intrinsic;
+
+intrinsic findV(RS1::RieSrf, RS2::RieSrf, roots_f2::SeqEnum) -> Any
+  {}
+  f1 := RS1`DefiningPolynomial;
+  L := Parent(roots_f2[1]);
+  v := InfinitePlaces(L)[1];
+  
+  sort_roots := RS1`Ordering;
+  roots_f1 := [Evaluate(r[1], v): r in Sort(Roots(f1, L))];
+  roots_f2 := [Evaluate(r, v): r in roots_f2];
+  HB1 := [e`EP : e in HomologyBasis(RS1)`Edges];
+  HB2 := [e`EP : e in HomologyBasis(RS2)`Edges];
+  
+  SymB1 := ChangeRing(RS1`HomologyBasis[3], GF(2));
+  SymB2 := ChangeRing(RS2`HomologyBasis[3], GF(2));
+  
+  S6 := Sym(6);
+  
+  p1 := Identity(S6);
+  p2 := Identity(S6);
+  
+  
+  
+  Sort(~roots_f1, sort_roots, ~p1);
+  Sort(~roots_f2, sort_roots, ~p2);
+  p1 := Eltseq(p1);
+  p2 := Eltseq(p2);
+  
+  if #p1 ne 6 then
+    Append(~p1, 6);
+  end if;
+  
+  if #p2 ne 6 then
+    Append(~p2, 6);
+  end if;
+  
+  p1 := S6!p1;
+  p2 := S6!p2;
+  
+  M1 := ZeroMatrix(GF(2), 6, #HB1);
+  M2 := ZeroMatrix(GF(2), 6, #HB2);
+  
+  for i in [1..#HB1] do
+    M1[HB1[i][1], i] := 1;
+    M1[HB1[i][2], i] := 1;
+  end for;
+  
+  for i in [1..#HB2] do
+    M2[HB2[i][1], i] := 1;
+    M2[HB2[i][2], i] := 1;
+  end for;
+  
+  M_p1 := PermutationMatrix(GF(2), p1);
+  M_p2 := PermutationMatrix(GF(2), p2);
+  
+  M1 := M_p1^(-1) * M1 * Transpose(SymB1);
+  M2 := M_p2^(-1) * M2 * Transpose(SymB2);
+  
+  MM := Matrix(GF(2), [[1,1,0,0,0],
+                                 [0,0,1,1,0],
+                                 [0,1,1,1,1],
+                                 [0,0,0,1,1]
+                                 ]);
+                                 
+  M1 +:= Matrix(GF(2), 6, 1, [1,1,1,1,1,1]) * Matrix(GF(2), M1[6]);
+  M2 +:= Matrix(GF(2), 6, 1, [1,1,1,1,1,1]) * Matrix(GF(2), M2[6]);
+  
+  M1 := Submatrix(M1, [1..5], [1..4]);
+  M2 := Submatrix(M2, [1..5], [1..4]);
+  
+  A1 := Solution(Transpose(M1), MM);
+  A2 := Solution(Transpose(M2), MM);
+  
+  return Image(HorizontalJoin(A1, A2));
+end intrinsic;
 
 
