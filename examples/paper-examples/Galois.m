@@ -31,9 +31,14 @@ end function;
 function ComputeGaloisAction(f)
   
   L := SplittingField(f);
-  M, mM := OptimisedRepresentation(L);
-  G,S, phi := AutomorphismGroup(M);
-  gens := Setseq(Generators(G));
+  if Characteristic(L) eq 0 then
+	  M, mM := OptimisedRepresentation(L);
+	  G,S, phi := AutomorphismGroup(M);
+	  gens := Setseq(Generators(G));
+  else
+          p:= Characteristic(L);
+	  gens := [hom<L -> L | L.1^p>];
+  end if;
   roots := [r[1]: r in Roots(f, L)];
   Sort(~roots);
   ActionOnTheta := [];
@@ -43,7 +48,11 @@ function ComputeGaloisAction(f)
   eta := EtaFunction0(2);
   sigmas:=[];
   for g in gens do
-    sigma_g := mM * phi(g) * mM^(-1);
+    if p eq 0 then
+	    sigma_g := mM * phi(g) * mM^(-1);
+    else
+	    sigma_g := g;
+    end if;
     Append(~sigmas, sigma_g);    
     g_roots := [sigma_g(r): r in roots];
     indices := [1..#roots];
@@ -157,9 +166,16 @@ end function;
 function IgusaTwist(f)
 	coc, sigmas, Igusa := ComputeCocycle(f);
         L := Domain(sigmas[1]);
+        K := BaseRing(Parent(f));
+ 	p := Characteristic(K);
         coc := [ChangeRing(co, L): co in coc];
-        cocV := [BlockMatrix(5,5,[RepresentationMatrix(a): a in Eltseq(co)]): co in coc];
-	V, m := KSpace(L, Rationals());
+	if p eq 0 then
+	        cocV := [BlockMatrix(5,5,[RepresentationMatrix(a, K): a in Eltseq(co)]): co in coc];
+	else 
+	        _, mat := MatrixAlgebra(L, K);
+                cocV := [BlockMatrix(5,5,[mat(a): a in Eltseq(co)]): co in coc];
+	end if;
+	V, m := KSpace(L, K);
         n:= Dimension(V);
         sigmasV:= [m^(-1) * sig * m: sig in sigmas];
         Matsigmas := [Transpose(Matrix( [ sig(V.i): i in [1..n]]  )): sig in sigmasV];
@@ -193,7 +209,7 @@ for i in [1..5] do
 end for;
 	Point :=[ theta4[j]: j in [6,9,12,15,16]];
    	PointOnTwist:=[el: el in Eltseq(Vector(Point)*U0^(-1))];
-	PointOnTwist:=[Rationals()!(el/PointOnTwist[1]): el in PointOnTwist];
+	PointOnTwist:=[K!(el/PointOnTwist[1]): el in PointOnTwist];
 
 
 
