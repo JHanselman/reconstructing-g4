@@ -175,7 +175,7 @@ print "\n tritangent pairs:", tritpairs10;
 print "\n Linear system for the constants lambda_i", N;
 print "\n lambda_i:", gammaiinv;
 print "\n Basis for V_{C eta} is given by the following lin. comb. of generators ", Upart;
-print "\n Matrix for phi", phi;
+print "\n Matrix for phi", Transpose(phi);
 print "\n Quadric", Qnew;
 
 print "\n dualelt", dualelt;
