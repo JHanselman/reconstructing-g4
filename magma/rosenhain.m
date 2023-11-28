@@ -18,9 +18,6 @@ N:=Matrix( [Vector(v0s[i][1] cat v0s[i][2])-Vector(v0s[10][1] cat v0s[10][2]) : 
 zer:=ZeroMatrix(GF(2), 4,4);
 id:=IdentityMatrix(GF(2),4);
 J:=BlockMatrix([[zer, id],[id,zer]]);
-print N*J*Transpose(N);
-print M*J*Transpose(M);
-
 
 return Transpose(ChangeRing( M^(-1)*(ChangeRing(N, GF(2))), Integers()));
 end function;

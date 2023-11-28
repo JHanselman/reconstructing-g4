@@ -54,3 +54,6 @@ for S in Subsets({2..p-2},3) do
 		end if;
 	end if;
 end for;
+
+ p := [19, 29, 61, 89];
+ q := [5^3, 7^3];

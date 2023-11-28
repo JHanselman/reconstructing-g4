@@ -29,11 +29,19 @@ end function;
 //f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
 
 function ComputeGaloisAction(f)
-  
   L := SplittingField(f);
-  M, mM := OptimisedRepresentation(L);
-  G,S, phi := AutomorphismGroup(M);
-  gens := Setseq(Generators(G));
+  if Characteristic(L) eq 0 then
+          M, mM := OptimisedRepresentation(L);
+          G,S, phi := AutomorphismGroup(M);
+          gens := Setseq(Generators(G));
+  else
+          p:= Characteristic(L);
+	  if L eq BaseRing(Parent(f)) then
+		  gens := [];
+	  else
+	          gens := [hom<L -> L | L.1^p>];
+	  end if;
+  end if;
   roots := [r[1]: r in Roots(f, L)];
   Sort(~roots);
   ActionOnTheta := [];
@@ -43,7 +51,11 @@ function ComputeGaloisAction(f)
   eta := EtaFunction0(2);
   sigmas:=[];
   for g in gens do
-    sigma_g := mM * phi(g) * mM^(-1);
+    if p eq 0 then
+            sigma_g := mM * phi(g) * mM^(-1);
+    else
+            sigma_g := g;
+    end if;
     Append(~sigmas, sigma_g);    
     g_roots := [sigma_g(r): r in roots];
     indices := [1..#roots];
@@ -78,9 +90,9 @@ function ComputeGaloisAction(f)
   return ActionOnTheta,signs,  sigmas;
 end function;
 
-intrinsic IgusaCoordinates() -> Any
+intrinsic IgusaCoordinates(K::Fld) -> Any
   {}
-  M := ZeroMatrix(Rationals(), 5, 16);
+  M := ZeroMatrix(K, 5, 16);
   M[1, 8]:=1;
   M[1, 12]:=-1;
   M[1, 15]:=1;
@@ -105,7 +117,7 @@ intrinsic IgusaCoordinates() -> Any
   Ech := EchelonForm(M);
   pivots := [Min([i: i in [1..16]| Ech[j,i] ne 0  ]): j in [1..5]];
   even := [ 1, 2, 3, 4, 6, 8, 9, 12, 15, 16 ];
-  R16 := PolynomialRing(Rationals( ), 16);
+  R16 := PolynomialRing(K, 16);
   t8 := &+[R16.i^2: i in even];
   t16 := &+[R16.i^4: i in even];
   equ := t8^2-4*t16;
@@ -119,7 +131,7 @@ intrinsic IgusaCoordinates() -> Any
   equnew := Evaluate(equ, subs);
 
 
-  R4 := PolynomialRing(Rationals(),5);
+  R4 := PolynomialRing(K,5);
   subsfin := [R4!0: i in [1..16]];
   subsfin[6] := R4.1;
   subsfin[9] := R4.2;
@@ -147,23 +159,32 @@ intrinsic IgusaCoordinates() -> Any
   end intrinsic;
 
   function ComputeCocycle(f)
+      K := BaseRing(Parent(f));
       ActionOnTheta, signs, sigmas := ComputeGaloisAction(f);
-      vecs, Igusa := IgusaCoordinates();
+      vecs, Igusa := IgusaCoordinates(K);
       return [Transpose(Matrix([signs[j][i] * vecs[ActionOnTheta[j][i]]: i in [1..5]]  )): j in [1..#ActionOnTheta]], sigmas, Igusa;
   end function;
 
   intrinsic IgusaTwist(f::RngUPolElt) -> Any
     {}
+      K := BaseRing(Parent(f));
       coc, sigmas, Igusa := ComputeCocycle(f);
       if #sigmas eq 0 then
-        L := Rationals();
-        U0 := IdentityMatrix(L,5);
+        U0 := IdentityMatrix(K,5);
         Igtest := Igusa;
+ 	L := K;
       else
         L := Domain(sigmas[1]);
+        K := BaseRing(Parent(f));
+        p := Characteristic(K);
         coc := [ChangeRing(co, L): co in coc];
-        cocV := [BlockMatrix(5,5,[RepresentationMatrix(a): a in Eltseq(co)]): co in coc];
-        V, m := KSpace(L, Rationals());
+        if p eq 0 then
+                cocV := [BlockMatrix(5,5,[RepresentationMatrix(a, K): a in Eltseq(co)]): co in coc];
+        else
+                _, mat := MatrixAlgebra(L, K);
+                cocV := [BlockMatrix(5,5,[mat(a): a in Eltseq(co)]): co in coc];
+        end if;
+        V, m := KSpace(L, K);
         n:= Dimension(V);
         sigmasV:= [m^(-1) * sig * m: sig in sigmas];
         Matsigmas := [Transpose(Matrix( [ sig(V.i): i in [1..n]]  )): sig in sigmasV];
@@ -198,7 +219,7 @@ intrinsic IgusaCoordinates() -> Any
     end for;
       Point :=[ theta4[j]: j in [6,9,12,15,16]];
       PointOnTwist:=[el: el in Eltseq(Vector(Point)*U0^(-1))];
-      PointOnTwist:=[Rationals()!(el/PointOnTwist[1]): el in PointOnTwist];
+      PointOnTwist:=[K!(el/PointOnTwist[1]): el in PointOnTwist];
       return Igtest, PointOnTwist, U0;
 end intrinsic;
 
@@ -231,9 +252,10 @@ intrinsic HyperellipticCurveFromTheta4(theta4::SeqEnum) -> Any
   for loo in [0..7] do
     bin:=Intseq(loo,2,3);
     rostest:= [ros[water]*(-1)^bin[water]: water in [1..3]];
-    rootstest := [0,1] cat [-ro/(ro-2): ro in rostest] cat [-1];
+    repeat wei := L!Random(100);
+    until &and[((wei-1)*ro-wei) ne 0: ro in rostest] and not wei in [L|0, 1];
+    rootstest := [0,1] cat [-ro/((wei-1)*ro-wei): ro in rostest] cat [-1/(wei-1)];
     if #Seqset(rootstest) ne #rootstest then
-      print "found roots with opposite signs";
       continue;
     end if; 
     ftest:=X*(X-1)*&*[(X-L!ro): ro in rostest];
