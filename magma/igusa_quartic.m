@@ -36,10 +36,12 @@ function ComputeGaloisAction(f)
           gens := Setseq(Generators(G));
   else
           p:= Characteristic(L);
+          K := BaseRing(Parent(f));
+          q:= p^Degree(K);
 	  if L eq BaseRing(Parent(f)) then
 		  gens := [];
 	  else
-	          gens := [hom<L -> L | L.1^p>];
+	          gens := [hom<L -> L | L.1^q>];
 	  end if;
   end if;
   roots := [r[1]: r in Roots(f, L)];

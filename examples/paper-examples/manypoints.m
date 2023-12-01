@@ -2,12 +2,42 @@ AttachSpec("../../magma/spec");
 SetDebugOnError(true);
 //load "Galois.m";
 //load "gluingfuncs.m";
-p := 19;
 
-R<x>:=PolynomialRing(GF(p));
+
+//p := 5^3;
+//K := GF(p);
+//R<x>:=PolynomialRing(K);
+//f := x^5+x^3+x;
+
+//p := 7^3;
+//K := GF(p);
+//R<x>:=PolynomialRing(K);
+
+//g:= x^3+6*x^2+4;
+//a := Roots(g)[1][1];
+//f:= x^6+x^4+a^(115)*x^2+a^192;
+
+p := 13^3;
+K := GF(p);
+R<x>:=PolynomialRing(K);
+
+g:= x^3+2*x+1;
+a := Roots(g)[1][1];
+f:= x^6+x^4+a^(136)*x^2+a^1278;
+
+//p := 19^3;
+//K := GF(p);
+//R<x>:=PolynomialRing(K);
+
+//g:= X^3+4*X+17;
+//a := Roots(g)[1][1];
+//f:= x^6+x^4+a^(815)*x^2+a^6411;
+
 //f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
 //f :=(x^2-2)*(x-3)*(x-4)*(x-5)*(x-6);
-f:= 15*x^6+4*x^5+4*x^3+9*x^2+x+9; 
+//f:= 15*x^6+4*x^5+4*x^3+9*x^2+x+9; 
+
+
 /*
 if Degree(f) ne 6 then
   f := x*Reverse(f);
@@ -53,7 +83,7 @@ for loo in [1..#points] do
   */
 
   R:= Parent(f2);      
-  IgusaInvariants(f2, R!0: normalize:=true);
+  //IgusaInvariants(f2, R!0: normalize:=true);
   S, W:=IgusaInvariants(f2, R!0: normalize:=true);
   S:=[GF(p)!s : s in S];
 
@@ -67,6 +97,7 @@ for loo in [1..#points] do
        cur_min := len;
   elif len gt cur_max then
        cur_max := len;
+       print len, X2, Factorization(LPolynomial(X2));
   end if;
   if len in [33, 7] then
       print X2, Factorization(LPolynomial(X2));
