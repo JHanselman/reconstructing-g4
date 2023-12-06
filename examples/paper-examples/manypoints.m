@@ -1,5 +1,6 @@
 AttachSpec("../../magma/spec");
-SetDebugOnError(true);
+SetOutputFile("manypoints_output.txt");
+
 //load "Galois.m";
 //load "gluingfuncs.m";
 
@@ -54,7 +55,7 @@ print "looking for points on Igusa quartic";
 points := Points(Sch);
 L := BaseRing(U0);
 print "looping over points found";
-cur_min := 100;
+cur_min := p+1;
 cur_max := 0;
 for loo in [1..#points] do
   Poi2:=Eltseq(points[loo]);

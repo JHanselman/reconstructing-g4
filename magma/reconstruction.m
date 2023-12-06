@@ -907,9 +907,15 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   vprint Reconstruction: "Siegel reducing";
   tau_red, Q := SiegelReduction(tau);
   Q0 := ChangeRing(Q,BaseRing(Pi));
-  Pi := Pi*Q0;
+  A := Submatrix(Q0, 1,1,4,4);
+  B := Submatrix(Q0, 1,5,4,4);
+  C := Submatrix(Q0, 5,1,4,4);
+  D := Submatrix(Q0, 5,5,4,4);
+  Q1 := BlockMatrix(2,2, [Transpose(D), Transpose(B), Transpose(C), Transpose(A)]);
+  Pi := Pi*Q1;
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
+  print tau-tau_red;
   vprint Reconstruction: "Computing thetas";
   thetas := ComputeThetas(tau);
   vprint Reconstruction: "Reconstructing curve over CC";
@@ -917,6 +923,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   vprint Reconstruction: "Trying to recognize over QQ";
   CC4 := Parent(quadric);
   CC := BaseRing(CC4);
+  prec := Precision(CC);
   X:=Matrix(CC4, 4,1, [CC4.i: i in [1..4]]);
 
   tritangentbasis := [
@@ -951,10 +958,10 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   h := hom< R -> CC4 | x, y, z, w>;
   
   quadric_Q:= R!0;
-  
+  print quadric_C;
   for m in mons2 do
     coeff_C := MonomialCoefficient(quadric_C, h(m));
-    coeff_Q := BestApproximation(Real(coeff_C), 1000000);
+    coeff_Q := BestApproximation(Real(coeff_C), 10^(prec div 4));
     quadric_Q +:= coeff_Q * m;
   end for;
   
@@ -976,11 +983,11 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   
   cubic_C := &+[w[i] * h(mons3[i]) : i in [1..#mons3]];
   cubic_Q:= R!0;
-  
+  print cubic_C;
   vprint Reconstruction: "Trying to recognize coefficients over QQ";
   for m in mons3 do
     coeff_C := MonomialCoefficient(cubic_C, h(m));
-    coeff_Q := BestApproximation(Real(coeff_C), 1000000);
+    coeff_Q := BestApproximation(Real(coeff_C), 10^(prec div 4));
     cubic_Q +:= coeff_Q * m;
   end for;
   
