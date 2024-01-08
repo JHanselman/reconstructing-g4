@@ -253,3 +253,16 @@ X^2 - X*Z - X*T - Y^2 - Y*T + 2*Z^2 + Z*T - 4*T^2
 
 
 */
+
+// sanity check: endomorphism ring
+// requires CHIMP
+
+AttachSpec("spec");
+AttachSpec("../../CHIMP/CHIMP.spec");
+R<X,Y,Z,T> := PolynomialRing(RationalsExtra(300), 4);
+C2 := X^2 - X*Z - X*T - Y^2 - Y*T + 2*Z^2 + Z*T - 4*T^2;
+C3 := 2*X*Y*T - 2*X*Z^2 - 12*X*Z*T - 10*X*T^2 - Y^2*Z - 2*Y^2*T + Y*Z*T + 4*Y*T^2 + 2*Z^3 - 20*Z*T^2 - 18*T^3;
+C := Curve(Proj(R),[C2,C3]);
+E := GeometricEndomorphismRepresentation(C);
+mins := [Polredabs(MinimalPolynomial(E[i][1])) : i in [1..#E]];
+[Discriminant(el) : el in mins];
