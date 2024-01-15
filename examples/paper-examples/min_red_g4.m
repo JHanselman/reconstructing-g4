@@ -94,7 +94,7 @@ function MinimizeG4(Q, Gamma)
 	Gammanew := &+[vecopt[i]*m: i->m in mons3];
 	return Q1, Gammanew, S;
 end function;
-
+/*
 for i in [1..1] do
 	R4 := PolynomialRing(Rationals(), 4);
         mons2 := MonomialsOfDegree(R4, 2);
@@ -105,4 +105,4 @@ for i in [1..1] do
 	print Q, Gamma;
 	print Q1, Gamma1, "\n";
 end for;
-
+*/
