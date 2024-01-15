@@ -266,3 +266,28 @@ C := Curve(Proj(R),[C2,C3]);
 E := GeometricEndomorphismRepresentation(C);
 mins := [Polredabs(MinimalPolynomial(E[i][1])) : i in [1..#E]];
 [Discriminant(el) : el in mins];
+
+// make the corresponding modular form
+N := 778;
+M := ModularSymbols(N,2);
+H1 := CuspidalSubspace(M);  // apparently this represents H_1(X_0(N),Q)
+  H1N := NewSubspace(H1);      // This is not in the H142E23 example
+time D := NewformDecomposition(H1N);
+d := [Dimension(S) : S in D];
+d;
+/*
+[ 8, 14, 18, 24 ] -- remember these are twice the dimension of the corresponding J_0(N) factors
+*/
+S := D[1];
+bd := 100;
+eigs := SystemOfEigenvalues(S,bd);
+P<s> := PolynomialRing(Parent(eigs[1]));
+primes := PrimesUpTo(bd);
+for i->p in primes do
+  printf "checking p = %o\n", p;
+  if IsDivisibleBy(Level(S),p) then
+    continue;
+  else
+    assert PP!Reverse(LPolynomial(ChangeRing(C,GF(p)))) eq Norm(s^2 - eigs[i]*s + p);
+  end if;
+end for;
