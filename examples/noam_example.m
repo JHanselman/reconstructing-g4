@@ -205,6 +205,11 @@ Pi := Ps[1][1];
 CC1:= ComplexField(150);
 Pi := ChangeRing(Pi, CC1);
 Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
+tau := -Pi1^(-1) * Pi2;
+tau := (tau+Transpose(tau))/2;
+tau_red, Q := SiegelReduction(tau);
+err := Abs(SchottkyModularForm(tau_red : prec := 150));
+print err;
 Eqs := RationalReconstructCurveG4(HorizontalJoin(Pi2, Pi1));
 
 /*
