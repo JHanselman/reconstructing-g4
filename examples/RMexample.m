@@ -1,4 +1,4 @@
-AttachSpec("../../magma/spec");
+AttachSpec("~/reconstructing-g4/magma/spec");
 load "Galois.m";
 load "g2-rmlmfdb.m";
 
