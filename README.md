@@ -8,7 +8,6 @@ The repo contains two folders:
 - examples
 
 In the Magma folder we have the folowing files:
-- **Vs.m** Contains an array of maximal isotropic subgroups of F_2^4 and a few methods that are helpful for gluing.
 - **auxiliary.m** Contains a few auxiliary methods.
 - **azygetic.m** Contains the method that takes a system of four odd azygetic characteristics and extends it to a fundamental system.
 - **fast_theta.m** An adaption of Labrande's fast theta code to compute Theta null values.
@@ -22,8 +21,7 @@ In the Magma folder we have the folowing files:
 - **theta.m** Contains methods that compute Theta functions and the Siegel reduction of a period matrix.
 
 In the examples folder we have the following files:
-
+- **noam_example.m** Constructs a genus 4 curve whose ... TODO
 
 ## How to run the examples
-
 

@@ -4,15 +4,16 @@ SetDebugOnError(true);
 //load "gluingfuncs.m";
 
 R<x>:=PolynomialRing(Rationals());
-//f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
-//f :=(x^2-2)*(x-3)*(x-4)*(x-5)*(x-6);
-f := (x-1)*(x-2)*(x-3)*(x-4)*(x-5)*(x-6);
+f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
+f2test := 3 * x^5 - 68 * x^4 + 159 * x^3 + 232 * x^2 - 132 * x + 16;
+Stest :=IgusaInvariants(f2test, R!0: normalize:=true);
+
 f := EvenModel(f);
-/*
+
 if Degree(f) ne 6 then
   f := x*Reverse(f);
 end if;
-*/
+
 
 Ig, Poi, U0 := IgusaTwist(f);
 R4:=PolynomialRing(Rationals(),5);
@@ -20,11 +21,12 @@ Ig:=R4!Ig;
 TSpace := &+[Evaluate(Derivative(Ig, i), Poi) * R4.i: i in [1..5]];
 P4:=ProjectiveSpace(R4);
 Sch:=Scheme(P4, [Ig, TSpace]);
+SetOutputFile("Output.txt");
 print "looking for points on Igusa quartic";
-points := PointSearch(Sch, 500);
+points := PointSearch(Sch, 1000);
 L := BaseRing(U0);
 print "looping over points found";
-for loo in [1..500] do
+for loo in [1..250] do
   printf "curve index = %o\n", loo;
   Poi2:=Eltseq(points[loo]);
   TSpace2 := &+[Evaluate(Derivative(Ig, i), Poi2) * R4.i: i in [1..5]];
@@ -32,7 +34,7 @@ for loo in [1..500] do
     continue;
   end if;
   theta41part := Eltseq(Vector(L, Poi2)*U0);
-  vecs, equfin, xi := IgusaCoordinates();
+  vecs, equfin, xi := IgusaCoordinates(Rationals());
   evs := [Evaluate(x, theta41part) : x in xi];
   if #Seqset(evs) ne #evs then
     print "Found multiple gluings!";
@@ -58,10 +60,18 @@ for loo in [1..500] do
   */
 
   R:= Parent(f2);      
-  IgusaInvariants(f2, R!0: normalize:=true);
+
   S, W:=IgusaInvariants(f2, R!0: normalize:=true);
   S:=[Rationals()!s : s in S];
-
+  if IgusaInvariantsEqual(S, Stest) then
+        X2 := HyperellipticCurve(f2test);
+        bool, c := IsQuadraticTwist(BaseChange(X2, L), HyperellipticCurve(f2));
+	twistX2:= HyperellipticCurve(c*f2);
+	bool2, phi := IsIsomorphic(twistX2 , BaseChange(X2, L));
+        roots_f2 := [phi(twistX2![r, 0])[1] : r in ([L!0,1] cat ros)] cat [phi(twistX2![1,0,0])[1]];
+	printf "%m", roots_f2;
+        break;
+  end if;
   X1 := HyperellipticCurve(f);
   X2 := HyperellipticCurveFromIgusaInvariants(S);
   f2Q, g := HyperellipticPolynomials(X2);

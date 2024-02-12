@@ -30,12 +30,12 @@ end function;
 
 function ComputeGaloisAction(f)
   L := SplittingField(f);
+  p:= Characteristic(L);
   if Characteristic(L) eq 0 then
           M, mM := OptimisedRepresentation(L);
           G,S, phi := AutomorphismGroup(M);
           gens := Setseq(Generators(G));
   else
-          p:= Characteristic(L);
           K := BaseRing(Parent(f));
           q:= p^Degree(K);
 	  if L eq BaseRing(Parent(f)) then

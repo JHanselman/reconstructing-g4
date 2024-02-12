@@ -26,7 +26,6 @@ res:=Eltseq(&+[ eta[i] : i in S ]);
 return [res[1..g], res[g+1..2*g]];
 end function;
 
-//f := 24*x^5 + 36*x^4 - 4*x^3 - 12*x^2 + 1;
 
 function ComputeGaloisAction(f)
   
