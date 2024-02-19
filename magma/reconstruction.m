@@ -874,6 +874,10 @@ end function;
 
 intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
 {}
+  if not IsSymmetric(tau) then
+    print "tau not symmetric: replacing by (tau + tau^T)/2";
+    tau := (tau + Transpose(tau))/2;
+  end if;
   thetas := ComputeThetas(tau);
   return ReconstructCurveG4(thetas);
 end intrinsic;
@@ -903,6 +907,10 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   QQ := Rationals();
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
+  if not IsSymmetric(tau) then
+    print "tau not symmetric: replacing by (tau + tau^T)/2";
+    tau := (tau + Transpose(tau))/2;
+  end if;
   //tau := SmallPeriodMatrix(Pi);
   vprint Reconstruction: "Siegel reducing";
   tau_red, Q := SiegelReduction(tau);
