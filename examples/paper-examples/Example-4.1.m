@@ -1,3 +1,14 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+
+
   AttachSpec("~/reconstructing-g4/magma/spec");
   /* Consider the hyperelliptic curves
     X1 : y^2 = f1

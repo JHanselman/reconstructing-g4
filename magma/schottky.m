@@ -1,3 +1,13 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+
 intrinsic SchottkyModularForm(tau::AlgMatElt : prec := -1) -> Any
   {}
    

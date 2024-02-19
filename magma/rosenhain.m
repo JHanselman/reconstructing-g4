@@ -1,3 +1,20 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+
+/*
+Code adapted from code written by Jeroen Sijsling which can be found on: 
+ https://github.com/JRSijsling/curve_reconstruction/blob/master/magma/rosenhain.m
+
+ */
+
+
 function IsEvenVector(v)
 w := Eltseq(v); g := #w div 2;
 w1 := w[1..g]; w2 := w[(g + 1)..(2*g)];

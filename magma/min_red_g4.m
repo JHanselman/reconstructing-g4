@@ -1,3 +1,14 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+
+
 function MinimizeReduceQuadric(Q)
 	g := Nrows(Q);
 	S := IdentityMatrix(Rationals(), g);

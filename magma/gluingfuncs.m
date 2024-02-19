@@ -1,3 +1,18 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+
+/*
+Code adapted from code written by Jeroen Hanselman, Sam Schiavone and Jeroen Sijsling which can be found on: 
+https://github.com/JRSijsling/gluing/tree/master/magma/analytic
+ */
+
 function AllVs2For22GLev2()
   return [ PowerRSpace(GF(2), 8, 4) |
       sub<VectorSpace(GF(2), 8) |

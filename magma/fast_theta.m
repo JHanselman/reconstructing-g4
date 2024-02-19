@@ -1,3 +1,13 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+
 /*
   Adapted from Labrande's fast theta code: https://github.com/hlabrand/phdcode
 */

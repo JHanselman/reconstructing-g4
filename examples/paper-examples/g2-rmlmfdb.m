@@ -1,3 +1,14 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+
+
 
 // Genus 2 curves downloaded from the LMFDB on 26 July 2023.
 // Query "{'num_rat_wpts': {'$gte': 1, '$lte': 6}, 'geom_end_alg': 'RM'}" returned 29 curves.
