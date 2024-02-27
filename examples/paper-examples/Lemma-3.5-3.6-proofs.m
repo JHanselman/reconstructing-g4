@@ -180,8 +180,8 @@ print "\n Quadric", Qnew;
 
 print "\n dualelt", dualelt;
 print "\n extension of phi", phiext;
-print "\n compostion in the definition of G", phiL;
-print "\n symmetric matrix in definition of G", qdual;
+print "\n compostion in the definition of tilde{G}", phiL;
+print "\n symmetric matrix in definition of tilde{G}", qdual;
 print "\n Taking the discriminant", detqdual;
 print "\n Recover the curve", Radical(I);
 

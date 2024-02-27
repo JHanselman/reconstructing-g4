@@ -1,0 +1,38 @@
+looking for points on Igusa quartic
+looping over points found
+curve index = 1
+curve index = 2
+curve index = 3
+curve index = 4
+curve index = 5
+curve index = 6
+curve index = 7
+curve index = 8
+curve index = 9
+curve index = 10
+curve index = 11
+curve index = 12
+curve index = 13
+curve index = 14
+curve index = 15
+curve index = 16
+curve index = 17
+curve index = 18
+curve index = 19
+curve index = 20
+curve index = 21
+curve index = 22
+curve index = 23
+curve index = 24
+curve index = 25
+curve index = 26
+curve index = 27
+curve index = 28
+curve index = 29
+curve index = 30
+
+In file "QMexample.m", line 31, column 22:
+>>   Poi2:=Eltseq(points[loo]);
+                        ^
+Runtime error in '[]': Sequence index 30 should be in the range 1 to 29
+
