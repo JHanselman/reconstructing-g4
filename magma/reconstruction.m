@@ -281,7 +281,7 @@ intrinsic ComputeBitangents(thetas::SeqEnum) -> SeqEnum
   Ltra := DiagonalMatrix(Eltseq(lambdastra));
   Btra := Transpose(modstra)*Ltra;
   kstra := Solution(Transpose(Btra), Vector([BaseRing(Parent(Btra)) | -1,-1,-1]));
-  vprint Reconstruction: f "kstra = %o\n", kstra;
+  vprintf Reconstruction: "kstra = %o\n", kstra;
   k:=kstra[1];
   kp:=kstra[2];
 
