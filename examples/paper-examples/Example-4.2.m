@@ -9,7 +9,7 @@
  */
 
 
-AttachSpec("~/reconstructing-g4/magma/spec");
+AttachSpec("~/github/reconstructing-g4/magma/spec");
 
 
 CC<I> := ComplexField(300);
