@@ -281,7 +281,7 @@ intrinsic ComputeBitangents(thetas::SeqEnum) -> SeqEnum
   Ltra := DiagonalMatrix(Eltseq(lambdastra));
   Btra := Transpose(modstra)*Ltra;
   kstra := Solution(Transpose(Btra), Vector([BaseRing(Parent(Btra)) | -1,-1,-1]));
-  printf "kstra = %o\n", kstra;
+  vprintf Reconstruction: "kstra = %o\n", kstra;
   k:=kstra[1];
   kp:=kstra[2];
 
@@ -906,7 +906,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
   if not IsSymmetric(tau) then
-    print "tau not symmetric: replacing by (tau + tau^T)/2";
+    vprint Reconstruction:  "tau not symmetric: replacing by (tau + tau^T)/2";
     tau := (tau + Transpose(tau))/2;
   end if;
   //tau := SmallPeriodMatrix(Pi);
@@ -921,7 +921,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   Pi := Pi*Q1;
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
-  print tau-tau_red;
+  vprint Reconstruction:  tau-tau_red;
   vprint Reconstruction: "Computing thetas";
   thetas := ComputeThetas(tau);
   vprint Reconstruction: "Reconstructing curve over CC";
@@ -964,7 +964,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   h := hom< R -> CC4 | x, y, z, w>;
   
   quadric_Q:= R!0;
-  print quadric_C;
+  vprint Reconstruction:  quadric_C;
   for m in mons2 do
     coeff_C := MonomialCoefficient(quadric_C, h(m));
     coeff_Q := BestApproximation(Real(coeff_C), 10^(prec div 4));
@@ -989,7 +989,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   
   cubic_C := &+[w[i] * h(mons3[i]) : i in [1..#mons3]];
   cubic_Q:= R!0;
-  print cubic_C;
+  vprint Reconstruction:  cubic_C;
   vprint Reconstruction: "Trying to recognize coefficients over QQ";
   for m in mons3 do
     coeff_C := MonomialCoefficient(cubic_C, h(m));
