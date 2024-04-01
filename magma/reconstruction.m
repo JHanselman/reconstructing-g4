@@ -560,79 +560,76 @@ function liftSpN(A, n)
 end function;
 
 
-
-
-
-
 function MapSympl(vec1)
-	//Finds a symplectic transformation mapping vec1 to vec2
-	vec2:=Vector([GF(2)|0,1,1,1,0,1,0,1]);
-	ZZ:=Integers();
-        id:=IdentityMatrix(ZZ, 4);
-        zer:=ZeroMatrix(ZZ, 4,4);
-        idGF2:=IdentityMatrix(GF(2), 4);
-        zerGF2:=ZeroMatrix(GF(2), 4,4);
-	J1:=BlockMatrix([[zerGF2, idGF2],[zerGF2, zerGF2]]);
-        J:=BlockMatrix([[zerGF2, idGF2],[idGF2, zerGF2]]);
+  //Finds a symplectic transformation mapping vec1 to vec2
+  vec2:=Vector([GF(2)|0,1,1,1,0,1,0,1]);
+  ZZ:=Integers();
+  id:=IdentityMatrix(ZZ, 4);
+  zer:=ZeroMatrix(ZZ, 4,4);
+  idGF2:=IdentityMatrix(GF(2), 4);
+  zerGF2:=ZeroMatrix(GF(2), 4,4);
+  J1:=BlockMatrix([[zerGF2, idGF2],[zerGF2, zerGF2]]);
+  J:=BlockMatrix([[zerGF2, idGF2],[idGF2, zerGF2]]);
 
-        if vec1 eq 0 then
-		//Maybe transpose/inverse of this matrix?
-
-		return Matrix(ZZ, 8,8, [[1, 0, 0, 0, 0, 0, 0, 0]
-                                       [0, 1, 1, 1, 0, -1, 1, 1],
-                                       [0, 0, 1, 0, 0, 0, -1, 0],
-                                       [0, 0, 1, 0, 0, -1, 1, 1],
-                                       [0, 0, 0, 0, 1, 0, 0, 0],
-                                       [0, -1, -1, -1, 0, 2, -1, -1],
-                                       [0, 0, 0, -1, 0, 1, -1, -1],
-                                       [0, 0, -1, -1,0, -1, 1, 0]]);
-	end if;
-	V:=QuadraticSpace(J1);
-	sol1, kern1:= Solution(J*Transpose(Matrix(vec1)), Vector([GF(2)!1]));
-        sol2, kern2:= Solution(J*Transpose(Matrix(vec2)), Vector([GF(2)!1]));
-	for k in kern1 do
-		so:=sol1+k;
-		if (so*J1*Transpose(Matrix(so)))[1] eq 0 then
-	   	   sol1:= so;
-		   break;
-		end if;
-	end for;
-	for k in kern2 do
-                so:=sol2+k;
-                if (so*J1*Transpose(Matrix(so)))[1] eq 0 then
-                   sol2:= so;
-                   break;
-                end if;
-        end for;
-        ortho1:=OrthogonalComplement(V, sub<V|[vec1, sol1]>);
-        ortho2:=OrthogonalComplement(V, sub<V|[vec2, sol2]>);
-        bool, Trafo := IsIsometric(ortho2, ortho1);
-	Mat1:=Matrix([vec1, sol1] cat[Trafo(b): b in Basis(ortho2)]  );
-	Mat2:=Matrix([vec2, sol2] cat Basis(ortho2) );
-        return liftSpN(Mat1^(-1) * Mat2, 3);
+  if vec1 eq 0 then
+  //Maybe transpose/inverse of this matrix?
+    return Matrix(ZZ, 8,8, [
+      [1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 1, 1, 1, 0, -1, 1, 1],
+      [0, 0, 1, 0, 0, 0, -1, 0],
+      [0, 0, 1, 0, 0, -1, 1, 1],
+      [0, 0, 0, 0, 1, 0, 0, 0],
+      [0, -1, -1, -1, 0, 2, -1, -1],
+      [0, 0, 0, -1, 0, 1, -1, -1],
+      [0, 0, -1, -1,0, -1, 1, 0]
+    ]);
+  end if;
+  V:=QuadraticSpace(J1);
+  sol1, kern1:= Solution(J*Transpose(Matrix(vec1)), Vector([GF(2)!1]));
+  sol2, kern2:= Solution(J*Transpose(Matrix(vec2)), Vector([GF(2)!1]));
+  for k in kern1 do
+    so:=sol1+k;
+    if (so*J1*Transpose(Matrix(so)))[1] eq 0 then
+       sol1:= so;
+       break;
+    end if;
+  end for;
+  for k in kern2 do
+    so:=sol2+k;
+    if (so*J1*Transpose(Matrix(so)))[1] eq 0 then
+       sol2:= so;
+       break;
+    end if;
+  end for;
+  ortho1:=OrthogonalComplement(V, sub<V|[vec1, sol1]>);
+  ortho2:=OrthogonalComplement(V, sub<V|[vec2, sol2]>);
+  bool, Trafo := IsIsometric(ortho2, ortho1);
+  Mat1:=Matrix([vec1, sol1] cat[Trafo(b): b in Basis(ortho2)]  );
+  Mat2:=Matrix([vec2, sol2] cat Basis(ortho2) );
+  return liftSpN(Mat1^(-1) * Mat2, 3);
 end function;
 
 
 procedure TransformThetanulls(~thetas, S)
-	CC:=Parent(thetas[1]);
-        I:=CC.1;
-	g:=Nrows(S) div 2;
-        A:=Submatrix(Transpose(S), [1..g], [1..g]);
-        B:=Submatrix(Transpose(S), [1..g], [g+1..2*g]);
-        C:=Submatrix(Transpose(S), [g+1..2*g], [1..g]);
-        D:=Submatrix(Transpose(S), [g+1..2*g], [g+1..2*g]);
-        even:=EvenThetaCharacteristics(g);
-        thetatrafo:=[CC!0: i in [1..2^(2*g)]];
-        for eve in even do
-                diag1:=Diagonal(B*Transpose(A));
-                diag2:=Diagonal(D*Transpose(C));
-                trafo:=Eltseq(Matrix([eve[1] cat eve[2]])*S+ Matrix(1,2*g, diag1 cat diag2));
-                trafo:=[trafo[1..g], trafo[g+1..2*g]];
-                exp:=&+[(trafo[1][i]-diag1[i]  ) * (trafo[2][i] +diag2[i])-eve[1][i]*eve[2][i]: i in [1..g]] div 2;
-                carry:=&+[ trafo[1][i]*(trafo[2][i] div 2): i in [1..g]];
-                thetatrafo[TCharToIndex(trafo)]:= (I)^exp * (-1)^carry * thetas[TCharToIndex(eve)];
-        end for;
-        thetas:=thetatrafo;
+  CC:=Parent(thetas[1]);
+  I:=CC.1;
+  g:=Nrows(S) div 2;
+  A:=Submatrix(Transpose(S), [2..g], [1..g]);
+  B:=Submatrix(Transpose(S), [1..g], [g+1..2*g]);
+  C:=Submatrix(Transpose(S), [g+1..2*g], [1..g]);
+  D:=Submatrix(Transpose(S), [g+1..2*g], [g+1..2*g]);
+  even:=EvenThetaCharacteristics(g);
+  thetatrafo:=[CC!0: i in [1..2^(2*g)]];
+  for eve in even do
+    diag1:=Diagonal(B*Transpose(A));
+    diag2:=Diagonal(D*Transpose(C));
+    trafo:=Eltseq(Matrix([eve[1] cat eve[2]])*S+ Matrix(1,2*g, diag1 cat diag2));
+    trafo:=[trafo[1..g], trafo[g+1..2*g]];
+    exp:=&+[(trafo[1][i]-diag1[i]  ) * (trafo[2][i] +diag2[i])-eve[1][i]*eve[2][i]: i in [1..g]] div 2;
+    carry:=&+[ trafo[1][i]*(trafo[2][i] div 2): i in [1..g]];
+    thetatrafo[TCharToIndex(trafo)]:= (I)^exp * (-1)^carry * thetas[TCharToIndex(eve)];
+  end for;
+  thetas:=thetatrafo;
 end procedure;
 
 function ComputeSquareRootOnCone(f6)
@@ -764,6 +761,7 @@ The list of characteristics is:
         mats1newx:=Matrix(CC4, 1, r,[(Transpose(x)*ChangeRing(mats1new[i], CC4)*x)[1,1]: i in [1..r]]);
 
         Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
+        //Write("~/github/Genus-4-RM-CM/vanishing-theta-null-debug.m", Sprintf("%m\n", Xnew));
         vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
 
         CC3 := PolynomialRing(CC, 3);
@@ -784,7 +782,7 @@ The list of characteristics is:
         sirows:=Nrows(si);
 
         N:=HorizontalJoin([  DiagonalMatrix(Eltseq(vi[i]))*fsq_mat : i in [1..Nrows(vi) ]]);
-       //TODO: Check singular values to see if rank is too small. If so then compute more tritangents.
+       //TODO: Check singular values to see if rank is too big. If so then compute more tritangents.
        DN:=SingularValueDecomposition(N);
        gammaiinv:=NumericalKernel(N: Epsilon:=RR!(10^(-15)));
 
