@@ -130,7 +130,9 @@ intrinsic ComputeThetas(tau::Mtrx) -> SeqEnum
 {}
   tau := tau/2;
   g := Nrows(tau);
+  vprint Theta: "Computing theta constants with Magma";
   thconstants := [ ThetaMagma(i,tau) : i in [0..2^g-1]];
+  vprint Theta: "Applying duplication formula";
   allthetas2tau := AllDuplication(thconstants);
   allthetas := [Sqrt(allthetas2tau[i+1]) * SignT(i, 2* tau) : i in [0..2^(2*g)-1]];
   return allthetas[2..#allthetas] cat [allthetas[1]];

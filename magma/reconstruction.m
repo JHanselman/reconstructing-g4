@@ -447,7 +447,7 @@ function ComputeCurve(bitangents, tritangents)
   mats1newx:=Matrix(CC4, 1, r,[(Transpose(x)*ChangeRing(mats1new[i], CC4)*x)[1,1]: i in [1..r]]);
 
   Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
-  vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
+  vi:=NumericalKernel(Xnew: Epsilon:=RR!11^(-15));
   
   CC3 := PolynomialRing(CC, 3);
   
@@ -876,6 +876,7 @@ intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
     print "tau not symmetric: replacing by (tau + tau^T)/2";
     tau := (tau + Transpose(tau))/2;
   end if;
+  // TODO: Add Siegel reduction here
   thetas := ComputeThetas(tau);
   return ReconstructCurveG4(thetas);
 end intrinsic;
