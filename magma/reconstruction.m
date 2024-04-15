@@ -614,7 +614,7 @@ procedure TransformThetanulls(~thetas, S)
   CC:=Parent(thetas[1]);
   I:=CC.1;
   g:=Nrows(S) div 2;
-  A:=Submatrix(Transpose(S), [2..g], [1..g]);
+  A:=Submatrix(Transpose(S), [1..g], [1..g]);
   B:=Submatrix(Transpose(S), [1..g], [g+1..2*g]);
   C:=Submatrix(Transpose(S), [g+1..2*g], [1..g]);
   D:=Submatrix(Transpose(S), [g+1..2*g], [g+1..2*g]);

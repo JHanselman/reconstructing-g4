@@ -500,6 +500,7 @@ intrinsic SiegelReduction(tau::AlgMatElt) -> Any
 
   g := Nrows(tau);
   CC<I> := BaseRing(tau);
+  eps := 10^(-Precision(CC)/3);
   RR := BaseRing(Real(tau));
   QQ := Rationals();
   ZZ := Integers();
@@ -516,7 +517,7 @@ intrinsic SiegelReduction(tau::AlgMatElt) -> Any
   e := RR!0;
 
   vprint Theta: "Entering while loop";
-  while e le 1 do
+  while e le 1+eps do
     Y := Imaginary(tau);
     Y := (Y + Transpose(Y))/2; // make sure matrix is symmetric
     T := Cholesky(Y);
@@ -560,7 +561,7 @@ intrinsic SiegelReduction(tau::AlgMatElt) -> Any
     Gamma := VerticalJoin(HorizontalJoin(IdentityMatrix(RR,g), -B), HorizontalJoin(ZeroMatrix(RR,g,g), IdentityMatrix(RR,g)))*Gamma;
     e := Abs(tau[1,1]);
     vprintf Theta: "Now e = %o\n", e;
-    if e gt 1 then
+    if e ge 1-eps then
       return tau, MatrixRing(Integers(),2*g)!Gamma;
     else
       Gamma := quasi_inversion*Gamma;
