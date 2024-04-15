@@ -702,53 +702,6 @@ function ComputeCurveVanTheta0(thetas, v)
         TransformThetanulls(~thetas, S);
         tritangents := ComputeTritangents(thetas);
         bitangents := OddThetaPrymInfoHyp(thetas);
-	/*TODO: Find the bijection between the characteristics and the odd theta lines. The lines are ordered by the natural ordering coming from the Weierstrass points.
-The list of characteristics is:
-	  [
-    (1 1 1 0 0 1),
-    (0 0 1 0 0 1),
-    (0 0 1 0 1 1),
-    (0 1 0 0 1 1),
-    (0 1 0 0 1 0),
-    (0 1 1 0 1 0),
-    (0 1 1 1 0 1),
-    (0 0 1 1 0 1),
-    (0 0 1 1 1 1),
-    (0 1 0 1 1 1),
-    (0 1 0 1 1 0),
-    (0 1 1 1 1 0),
-    (0 1 1 0 0 1),
-    (1 1 1 1 1 1),
-    (1 0 0 1 1 1),
-    (1 0 0 1 1 0),
-    (1 0 1 1 1 0),
-    (1 0 1 0 0 1),
-    (1 0 0 1 0 1),
-    (1 0 0 1 0 0),
-    (1 0 1 1 0 0),
-    (1 0 1 0 1 1),
-    (1 1 1 1 0 0),
-    (1 1 0 1 0 0),
-    (1 1 0 0 1 1),
-    (1 1 0 1 0 1),
-    (1 1 0 0 1 0),
-    (1 1 1 0 1 0)
-]
-
-
-[[ 1, 1, 0,  1, 0, 0 ], 
-    [  1, 0, 0,  1, 0, 0 ],
-    [  1, 0, 1,  1, 0, 0 ],
-    [  1, 1, 1,  1, 0, 0 ],
-    [  1, 0, 1,  1, 1, 0 ],
-    [  1, 0, 0,  1, 1, 0 ],
-    [  1, 0, 0,  1, 1, 1 ],
-    [  1, 1, 1,  1, 1, 1 ],
-    [  1, 0, 0,  1, 0, 1 ],
-    [  1, 1, 0,  1, 0, 1 ]];
-
-    So should be that:
-*/
         bitangents:=[bitangents[i]: i in  [24, 20, 21, 23, 17, 16, 15, 14, 19, 26 ]];
 
         r:= #tritangents;
