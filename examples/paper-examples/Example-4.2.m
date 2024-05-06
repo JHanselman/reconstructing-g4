@@ -10,6 +10,7 @@
 
 
 AttachSpec("~/github/reconstructing-g4/magma/spec");
+AttachSpec("~/github/Genus-4/magma/spec");
 
 
 CC<I> := ComplexField(300);
@@ -27,3 +28,36 @@ err := Abs(SchottkyModularForm(tau_red : prec := 150));
 print "Absolute value of Schottky modular form is", err;
 Eqs := RationalReconstructCurveG4(HorizontalJoin(Pi2, Pi1));
 print "Curve found! The equations are:", Eqs;
+
+// improve equation
+load "~/github/reconstructing-g4/magma/min_red_g4.m";
+R := Parent(Eqs[1]);
+quadric, cubic := Explode(Eqs);
+quadric, cubic := MinimizeG4(quadric, cubic);
+C := Curve(Proj(R), [quadric, cubic]);
+// compute invariants of curve using Thomas Bouchet's package
+invs := InvariantsGenus4Curves(quadric,cubic);
+load "~/github/Genus-4/magma/decomposition.m";
+disc := DiscriminantFromInvariantsGenus4(invs);
+facts := Factorization(Numerator(disc)); // prime factor 113 in denominator is not actually bad in this example
+printf "Factorization of discriminant %o\n", facts;
+
+// compare aps with modular form downloaded from LMFDB
+load "778.2.a.a.m";
+f := MakeNewformModFrm_778_2_a_a(: prec := 1000);
+/*
+K<z> := CyclotomicField(15);
+Kp := sub< K | z + z^-1 >;
+*/
+Kf := CoefficientField(f);
+bad_ps := [el[1] : el in facts];
+ps := [p : p in PrimesUpTo(1000) | not p in bad_ps];
+aps := [];
+for p in ps do
+  printf "Check prime %o\n", p;
+  fpoly := Polynomial([1, -Coefficient(f,p), p]);
+  Lpoly := LPolynomial(Curve(Reduction(C,p)));
+  Lpoly := ChangeRing(Lpoly, Kf);
+  assert IsDivisibleBy(Lpoly, fpoly);
+end for;
+print "L-functions match for all primes up to 1000";
