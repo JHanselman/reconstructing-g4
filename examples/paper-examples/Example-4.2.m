@@ -39,25 +39,27 @@ C := Curve(Proj(R), [quadric, cubic]);
 invs := InvariantsGenus4Curves(quadric,cubic);
 load "~/github/Genus-4/magma/decomposition.m";
 disc := DiscriminantFromInvariantsGenus4(invs);
-facts := Factorization(Numerator(disc)); // prime factor 113 in denominator is not actually bad in this example
+printf "discriminant = %o\n", disc;
+facts := Factorization(Numerator(disc)); // prime factor 113 is not actually bad in this example
 printf "Factorization of discriminant %o\n", facts;
 
 // compare aps with modular form downloaded from LMFDB
 load "778.2.a.a.m";
 f := MakeNewformModFrm_778_2_a_a(: prec := 1000);
-/*
-K<z> := CyclotomicField(15);
-Kp := sub< K | z + z^-1 >;
-*/
 Kf := CoefficientField(f);
 bad_ps := [el[1] : el in facts];
 ps := [p : p in PrimesUpTo(1000) | not p in bad_ps];
-aps := [];
+tt0 := Cputime();
 for p in ps do
-  printf "Check prime %o\n", p;
+  t0 := Cputime();
+  printf "Checking p = %o...", p;
   fpoly := Polynomial([1, -Coefficient(f,p), p]);
   Lpoly := LPolynomial(Curve(Reduction(C,p)));
   Lpoly := ChangeRing(Lpoly, Kf);
   assert IsDivisibleBy(Lpoly, fpoly);
+  t1 := Cputime();
+  printf "took %o s\n", t1-t0;
 end for;
+tt1 := Cputime();
+printf "Total time for verification: %o s\n", tt1-tt0;
 print "L-functions match for all primes up to 1000";
