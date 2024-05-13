@@ -577,7 +577,7 @@ function MapSympl(vec1)
 
         if vec1 eq 0 then
 		//Maybe transpose/inverse of this matrix?
-
+		vprint Reconstruction: "Warning: This part of the code is experimental.";
 		return Matrix(ZZ, 8,8, [[1, 0, 0, 0, 0, 0, 0, 0]
                                        [0, 1, 1, 1, 0, -1, 1, 1],
                                        [0, 0, 1, 0, 0, 0, -1, 0],
