@@ -447,7 +447,8 @@ function ComputeCurve(bitangents, tritangents)
   mats1newx:=Matrix(CC4, 1, r,[(Transpose(x)*ChangeRing(mats1new[i], CC4)*x)[1,1]: i in [1..r]]);
 
   Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
-  vi:=NumericalKernel(Xnew: Epsilon:=RR!11^(-15));
+  // TODO: this should probably scale with precision
+  vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
   
   CC3 := PolynomialRing(CC, 3);
   
@@ -823,14 +824,20 @@ function ComputeCurveHypEll(thetas, v0s)
   return rosens;
 end function;
 
-intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
+intrinsic ReconstructCurveG4(tau::AlgMatElt : flint := false)->SeqEnum
 {}
   if not IsSymmetric(tau) then
     print "tau not symmetric: replacing by (tau + tau^T)/2";
     tau := (tau + Transpose(tau))/2;
   end if;
   // TODO: Add Siegel reduction here
-  thetas := ComputeThetas(tau);
+  if flint then
+    vprint Reconstruction: "Using Flint";
+    thetas := ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau);
+  else
+    vprint Reconstruction: "Using Magma and duplication formula";
+    thetas := ComputeThetas(tau);
+  end if;
   return ReconstructCurveG4(thetas);
 end intrinsic;
 
@@ -854,8 +861,8 @@ intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
 end intrinsic;
 
 
-intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
-{}
+intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := false)->SeqEnum
+  {}
   QQ := Rationals();
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
@@ -877,7 +884,13 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   tau := Pi1^-1*Pi2;
   vprint Reconstruction:  tau-tau_red;
   vprint Reconstruction: "Computing thetas";
-  thetas := ComputeThetas(tau);
+  if flint then
+    vprint Reconstruction: "Using Flint";
+    thetas := ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau);
+  else
+    vprint Reconstruction: "Using Magma and duplication formula";
+    thetas := ComputeThetas(tau);
+  end if;
   vprint Reconstruction: "Reconstructing curve over CC";
   quadric, cubic := Explode(ReconstructCurveG4(thetas));
   vprint Reconstruction: "Trying to recognize over QQ";
