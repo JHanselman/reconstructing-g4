@@ -281,7 +281,7 @@ intrinsic ComputeBitangents(thetas::SeqEnum) -> SeqEnum
   Ltra := DiagonalMatrix(Eltseq(lambdastra));
   Btra := Transpose(modstra)*Ltra;
   kstra := Solution(Transpose(Btra), Vector([BaseRing(Parent(Btra)) | -1,-1,-1]));
-  printf "kstra = %o\n", kstra;
+  vprintf Reconstruction: "kstra = %o\n", kstra;
   k:=kstra[1];
   kp:=kstra[2];
 
@@ -447,7 +447,7 @@ function ComputeCurve(bitangents, tritangents)
   mats1newx:=Matrix(CC4, 1, r,[(Transpose(x)*ChangeRing(mats1new[i], CC4)*x)[1,1]: i in [1..r]]);
 
   Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
-  vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
+  vi:=NumericalKernel(Xnew: Epsilon:=RR!11^(-15));
   
   CC3 := PolynomialRing(CC, 3);
   
@@ -560,10 +560,6 @@ function liftSpN(A, n)
 end function;
 
 
-
-
-
-
 function MapSympl(vec1)
 	//Finds a symplectic transformation mapping vec1 to vec2
 	vec2:=Vector([GF(2)|0,1,1,1,0,1,0,1]);
@@ -614,25 +610,25 @@ end function;
 
 
 procedure TransformThetanulls(~thetas, S)
-	CC:=Parent(thetas[1]);
-        I:=CC.1;
-	g:=Nrows(S) div 2;
-        A:=Submatrix(Transpose(S), [1..g], [1..g]);
-        B:=Submatrix(Transpose(S), [1..g], [g+1..2*g]);
-        C:=Submatrix(Transpose(S), [g+1..2*g], [1..g]);
-        D:=Submatrix(Transpose(S), [g+1..2*g], [g+1..2*g]);
-        even:=EvenThetaCharacteristics(g);
-        thetatrafo:=[CC!0: i in [1..2^(2*g)]];
-        for eve in even do
-                diag1:=Diagonal(B*Transpose(A));
-                diag2:=Diagonal(D*Transpose(C));
-                trafo:=Eltseq(Matrix([eve[1] cat eve[2]])*S+ Matrix(1,2*g, diag1 cat diag2));
-                trafo:=[trafo[1..g], trafo[g+1..2*g]];
-                exp:=&+[(trafo[1][i]-diag1[i]  ) * (trafo[2][i] +diag2[i])-eve[1][i]*eve[2][i]: i in [1..g]] div 2;
-                carry:=&+[ trafo[1][i]*(trafo[2][i] div 2): i in [1..g]];
-                thetatrafo[TCharToIndex(trafo)]:= (I)^exp * (-1)^carry * thetas[TCharToIndex(eve)];
-        end for;
-        thetas:=thetatrafo;
+  CC:=Parent(thetas[1]);
+  I:=CC.1;
+  g:=Nrows(S) div 2;
+  A:=Submatrix(Transpose(S), [1..g], [1..g]);
+  B:=Submatrix(Transpose(S), [1..g], [g+1..2*g]);
+  C:=Submatrix(Transpose(S), [g+1..2*g], [1..g]);
+  D:=Submatrix(Transpose(S), [g+1..2*g], [g+1..2*g]);
+  even:=EvenThetaCharacteristics(g);
+  thetatrafo:=[CC!0: i in [1..2^(2*g)]];
+  for eve in even do
+    diag1:=Diagonal(B*Transpose(A));
+    diag2:=Diagonal(D*Transpose(C));
+    trafo:=Eltseq(Matrix([eve[1] cat eve[2]])*S+ Matrix(1,2*g, diag1 cat diag2));
+    trafo:=[trafo[1..g], trafo[g+1..2*g]];
+    exp:=&+[(trafo[1][i]-diag1[i]  ) * (trafo[2][i] +diag2[i])-eve[1][i]*eve[2][i]: i in [1..g]] div 2;
+    carry:=&+[ trafo[1][i]*(trafo[2][i] div 2): i in [1..g]];
+    thetatrafo[TCharToIndex(trafo)]:= (I)^exp * (-1)^carry * thetas[TCharToIndex(eve)];
+  end for;
+  thetas:=thetatrafo;
 end procedure;
 
 function ComputeSquareRootOnCone(f6)
@@ -705,53 +701,6 @@ function ComputeCurveVanTheta0(thetas, v)
         TransformThetanulls(~thetas, S);
         tritangents := ComputeTritangents(thetas);
         bitangents := OddThetaPrymInfoHyp(thetas);
-	/*TODO: Find the bijection between the characteristics and the odd theta lines. The lines are ordered by the natural ordering coming from the Weierstrass points.
-The list of characteristics is:
-	  [
-    (1 1 1 0 0 1),
-    (0 0 1 0 0 1),
-    (0 0 1 0 1 1),
-    (0 1 0 0 1 1),
-    (0 1 0 0 1 0),
-    (0 1 1 0 1 0),
-    (0 1 1 1 0 1),
-    (0 0 1 1 0 1),
-    (0 0 1 1 1 1),
-    (0 1 0 1 1 1),
-    (0 1 0 1 1 0),
-    (0 1 1 1 1 0),
-    (0 1 1 0 0 1),
-    (1 1 1 1 1 1),
-    (1 0 0 1 1 1),
-    (1 0 0 1 1 0),
-    (1 0 1 1 1 0),
-    (1 0 1 0 0 1),
-    (1 0 0 1 0 1),
-    (1 0 0 1 0 0),
-    (1 0 1 1 0 0),
-    (1 0 1 0 1 1),
-    (1 1 1 1 0 0),
-    (1 1 0 1 0 0),
-    (1 1 0 0 1 1),
-    (1 1 0 1 0 1),
-    (1 1 0 0 1 0),
-    (1 1 1 0 1 0)
-]
-
-
-[[ 1, 1, 0,  1, 0, 0 ], 
-    [  1, 0, 0,  1, 0, 0 ],
-    [  1, 0, 1,  1, 0, 0 ],
-    [  1, 1, 1,  1, 0, 0 ],
-    [  1, 0, 1,  1, 1, 0 ],
-    [  1, 0, 0,  1, 1, 0 ],
-    [  1, 0, 0,  1, 1, 1 ],
-    [  1, 1, 1,  1, 1, 1 ],
-    [  1, 0, 0,  1, 0, 1 ],
-    [  1, 1, 0,  1, 0, 1 ]];
-
-    So should be that:
-*/
         bitangents:=[bitangents[i]: i in  [24, 20, 21, 23, 17, 16, 15, 14, 19, 26 ]];
 
         r:= #tritangents;
@@ -764,6 +713,7 @@ The list of characteristics is:
         mats1newx:=Matrix(CC4, 1, r,[(Transpose(x)*ChangeRing(mats1new[i], CC4)*x)[1,1]: i in [1..r]]);
 
         Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
+        //Write("~/github/Genus-4-RM-CM/vanishing-theta-null-debug.m", Sprintf("%m\n", Xnew));
         vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
 
         CC3 := PolynomialRing(CC, 3);
@@ -784,7 +734,7 @@ The list of characteristics is:
         sirows:=Nrows(si);
 
         N:=HorizontalJoin([  DiagonalMatrix(Eltseq(vi[i]))*fsq_mat : i in [1..Nrows(vi) ]]);
-       //TODO: Check singular values to see if rank is too small. If so then compute more tritangents.
+       //TODO: Check singular values to see if rank is too big. If so then compute more tritangents.
        DN:=SingularValueDecomposition(N);
        gammaiinv:=NumericalKernel(N: Epsilon:=RR!(10^(-15)));
 
@@ -874,6 +824,11 @@ end function;
 
 intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
 {}
+  if not IsSymmetric(tau) then
+    print "tau not symmetric: replacing by (tau + tau^T)/2";
+    tau := (tau + Transpose(tau))/2;
+  end if;
+  // TODO: Add Siegel reduction here
   thetas := ComputeThetas(tau);
   return ReconstructCurveG4(thetas);
 end intrinsic;
@@ -903,6 +858,10 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   QQ := Rationals();
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
+  if not IsSymmetric(tau) then
+    vprint Reconstruction:  "tau not symmetric: replacing by (tau + tau^T)/2";
+    tau := (tau + Transpose(tau))/2;
+  end if;
   //tau := SmallPeriodMatrix(Pi);
   vprint Reconstruction: "Siegel reducing";
   tau_red, Q := SiegelReduction(tau);
@@ -915,7 +874,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   Pi := Pi*Q1;
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
-  print tau-tau_red;
+  vprint Reconstruction:  tau-tau_red;
   vprint Reconstruction: "Computing thetas";
   thetas := ComputeThetas(tau);
   vprint Reconstruction: "Reconstructing curve over CC";
@@ -958,7 +917,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   h := hom< R -> CC4 | x, y, z, w>;
   
   quadric_Q:= R!0;
-  print quadric_C;
+  vprint Reconstruction:  quadric_C;
   for m in mons2 do
     coeff_C := MonomialCoefficient(quadric_C, h(m));
     coeff_Q := BestApproximation(Real(coeff_C), 10^(prec div 4));
@@ -983,7 +942,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   
   cubic_C := &+[w[i] * h(mons3[i]) : i in [1..#mons3]];
   cubic_Q:= R!0;
-  print cubic_C;
+  vprint Reconstruction:  cubic_C;
   vprint Reconstruction: "Trying to recognize coefficients over QQ";
   for m in mons3 do
     coeff_C := MonomialCoefficient(cubic_C, h(m));

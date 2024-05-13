@@ -1,3 +1,14 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+
+
 AttachSpec("../../magma/spec");
 SetDebugOnError(true);
 //load "Galois.m";

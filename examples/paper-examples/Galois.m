@@ -1,3 +1,14 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+
+
 function EtaFunction0(g);
 ZZ:=Integers();
 zer:=ZeroMatrix(ZZ, g,g);

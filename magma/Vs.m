@@ -1,3 +1,14 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+
+
 function AllVs2For22GLev2()
   return [ PowerRSpace(GF(2), 8, 4) |
       sub<VectorSpace(GF(2), 8) |

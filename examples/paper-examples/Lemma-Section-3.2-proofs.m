@@ -1,3 +1,14 @@
+/***
+ *  Reconstructing genus 4 curves
+ *
+ *  Jeroen Hanselman
+ *  Andreas Pieper
+ *  Sam Schiavone
+ *
+ *  See LICENSE.txt for license details.
+ */
+ 
+
 p:= 37;
 bitangents := [
     [GF(p)| 1, 0, 0 ],
@@ -156,6 +167,8 @@ Qpre:=Kernel(phi);
 basis := ExtendBasis(Image(Transpose(phi)), RSpace(GF(p),7));
   phiext:=HorizontalJoin(phi, Matrix(7,1, basis[7]));
   phiTinv:=ChangeRing(Transpose(phiext)^(-1), CC4);
+  print "phiTinv";
+  print phiTinv;
   phiL:=dualelt*phiTinv;
   qdual:=ZeroMatrix(CC4, 3,3);
   count:=1;
