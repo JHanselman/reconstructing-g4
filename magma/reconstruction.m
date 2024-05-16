@@ -572,16 +572,16 @@ function MapSympl(vec1)
         J:=BlockMatrix([[zerGF2, idGF2],[idGF2, zerGF2]]);
 
         if vec1 eq 0 then
-		//Maybe transpose/inverse of this matrix?
-		vprint Reconstruction: "Warning: This part of the code is experimental.";
-		return Matrix(ZZ, 8,8, [[1, 0, 0, 0, 0, 0, 0, 0]
-                                       [0, 1, 1, 1, 0, -1, 1, 1],
-                                       [0, 0, 1, 0, 0, 0, -1, 0],
-                                       [0, 0, 1, 0, 0, -1, 1, 1],
-                                       [0, 0, 0, 0, 1, 0, 0, 0],
-                                       [0, -1, -1, -1, 0, 2, -1, -1],
-                                       [0, 0, 0, -1, 0, 1, -1, -1],
-                                       [0, 0, -1, -1,0, -1, 1, 0]]);
+            //Maybe transpose/inverse of this matrix?
+            vprint Reconstruction: "Warning: This part of the code is experimental.";
+            return Matrix(ZZ, 8,8, [[1, 0, 0, 0, 0, 0, 0, 0]
+                                           [0, 1, 1, 1, 0, -1, 1, 1],
+                                           [0, 0, 1, 0, 0, 0, -1, 0],
+                                           [0, 0, 1, 0, 0, -1, 1, 1],
+                                           [0, 0, 0, 0, 1, 0, 0, 0],
+                                           [0, -1, -1, -1, 0, 2, -1, -1],
+                                           [0, 0, 0, -1, 0, 1, -1, -1],
+                                           [0, 0, -1, -1,0, -1, 1, 0]]);
 	end if;
 	V:=QuadraticSpace(J1);
 	sol1, kern1:= Solution(J*Transpose(Matrix(vec1)), Vector([GF(2)!1]));
@@ -730,6 +730,8 @@ function ComputeCurveVanTheta0(thetas, v)
            Append(~fsq_mat, cs);
         end for;
         fsq_mat := Matrix(fsq_mat);
+        // TODO: dim of kernel should be 
+        // should write a function that takes expected dimension as input and recomputes with more tritangents if kernel has wrong dimension
         si := NumericalKernel(fsq_mat);
         sirows:=Nrows(si);
 
@@ -828,8 +830,8 @@ intrinsic ReconstructCurveG4(tau::AlgMatElt)->SeqEnum
     print "tau not symmetric: replacing by (tau + tau^T)/2";
     tau := (tau + Transpose(tau))/2;
   end if;
-  // TODO: Add Siegel reduction here
-  thetas := ComputeThetas(tau);
+  tau_red, Q := SiegelReduction(tau);
+  thetas := ComputeThetas(tau_red);
   return ReconstructCurveG4(thetas);
 end intrinsic;
 
@@ -952,6 +954,3 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx)->SeqEnum
   
   return [quadric_Q, cubic_Q];
 end intrinsic;
-
-
-
