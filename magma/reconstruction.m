@@ -562,52 +562,51 @@ end function;
 
 
 function MapSympl(vec1)
-  //Finds a symplectic transformation mapping vec1 to vec2
-  vec2:=Vector([GF(2)|0,1,1,1,0,1,0,1]);
-  ZZ:=Integers();
-  id:=IdentityMatrix(ZZ, 4);
-  zer:=ZeroMatrix(ZZ, 4,4);
-  idGF2:=IdentityMatrix(GF(2), 4);
-  zerGF2:=ZeroMatrix(GF(2), 4,4);
-  J1:=BlockMatrix([[zerGF2, idGF2],[zerGF2, zerGF2]]);
-  J:=BlockMatrix([[zerGF2, idGF2],[idGF2, zerGF2]]);
+	//Finds a symplectic transformation mapping vec1 to vec2
+	vec2:=Vector([GF(2)|0,1,1,1,0,1,0,1]);
+	ZZ:=Integers();
+        id:=IdentityMatrix(ZZ, 4);
+        zer:=ZeroMatrix(ZZ, 4,4);
+        idGF2:=IdentityMatrix(GF(2), 4);
+        zerGF2:=ZeroMatrix(GF(2), 4,4);
+	J1:=BlockMatrix([[zerGF2, idGF2],[zerGF2, zerGF2]]);
+        J:=BlockMatrix([[zerGF2, idGF2],[idGF2, zerGF2]]);
 
-  if vec1 eq 0 then
-  //Maybe transpose/inverse of this matrix?
-    return Matrix(ZZ, 8,8, [
-      [1, 0, 0, 0, 0, 0, 0, 0]
-      [0, 1, 1, 1, 0, -1, 1, 1],
-      [0, 0, 1, 0, 0, 0, -1, 0],
-      [0, 0, 1, 0, 0, -1, 1, 1],
-      [0, 0, 0, 0, 1, 0, 0, 0],
-      [0, -1, -1, -1, 0, 2, -1, -1],
-      [0, 0, 0, -1, 0, 1, -1, -1],
-      [0, 0, -1, -1,0, -1, 1, 0]
-    ]);
-  end if;
-  V:=QuadraticSpace(J1);
-  sol1, kern1:= Solution(J*Transpose(Matrix(vec1)), Vector([GF(2)!1]));
-  sol2, kern2:= Solution(J*Transpose(Matrix(vec2)), Vector([GF(2)!1]));
-  for k in kern1 do
-    so:=sol1+k;
-    if (so*J1*Transpose(Matrix(so)))[1] eq 0 then
-       sol1:= so;
-       break;
-    end if;
-  end for;
-  for k in kern2 do
-    so:=sol2+k;
-    if (so*J1*Transpose(Matrix(so)))[1] eq 0 then
-       sol2:= so;
-       break;
-    end if;
-  end for;
-  ortho1:=OrthogonalComplement(V, sub<V|[vec1, sol1]>);
-  ortho2:=OrthogonalComplement(V, sub<V|[vec2, sol2]>);
-  bool, Trafo := IsIsometric(ortho2, ortho1);
-  Mat1:=Matrix([vec1, sol1] cat[Trafo(b): b in Basis(ortho2)]  );
-  Mat2:=Matrix([vec2, sol2] cat Basis(ortho2) );
-  return liftSpN(Mat1^(-1) * Mat2, 3);
+        if vec1 eq 0 then
+            //Maybe transpose/inverse of this matrix?
+            vprint Reconstruction: "Warning: This part of the code is experimental.";
+            return Matrix(ZZ, 8,8, [[1, 0, 0, 0, 0, 0, 0, 0]
+                                           [0, 1, 1, 1, 0, -1, 1, 1],
+                                           [0, 0, 1, 0, 0, 0, -1, 0],
+                                           [0, 0, 1, 0, 0, -1, 1, 1],
+                                           [0, 0, 0, 0, 1, 0, 0, 0],
+                                           [0, -1, -1, -1, 0, 2, -1, -1],
+                                           [0, 0, 0, -1, 0, 1, -1, -1],
+                                           [0, 0, -1, -1,0, -1, 1, 0]]);
+	end if;
+	V:=QuadraticSpace(J1);
+	sol1, kern1:= Solution(J*Transpose(Matrix(vec1)), Vector([GF(2)!1]));
+        sol2, kern2:= Solution(J*Transpose(Matrix(vec2)), Vector([GF(2)!1]));
+	for k in kern1 do
+		so:=sol1+k;
+		if (so*J1*Transpose(Matrix(so)))[1] eq 0 then
+	   	   sol1:= so;
+		   break;
+		end if;
+	end for;
+	for k in kern2 do
+                so:=sol2+k;
+                if (so*J1*Transpose(Matrix(so)))[1] eq 0 then
+                   sol2:= so;
+                   break;
+                end if;
+        end for;
+        ortho1:=OrthogonalComplement(V, sub<V|[vec1, sol1]>);
+        ortho2:=OrthogonalComplement(V, sub<V|[vec2, sol2]>);
+        bool, Trafo := IsIsometric(ortho2, ortho1);
+	Mat1:=Matrix([vec1, sol1] cat[Trafo(b): b in Basis(ortho2)]  );
+	Mat2:=Matrix([vec2, sol2] cat Basis(ortho2) );
+        return liftSpN(Mat1^(-1) * Mat2, 3);
 end function;
 
 
@@ -732,6 +731,8 @@ function ComputeCurveVanTheta0(thetas, v)
            Append(~fsq_mat, cs);
         end for;
         fsq_mat := Matrix(fsq_mat);
+        // TODO: dim of kernel should be 
+        // should write a function that takes expected dimension as input and recomputes with more tritangents if kernel has wrong dimension
         si := NumericalKernel(fsq_mat);
         sirows:=Nrows(si);
 
@@ -830,13 +831,13 @@ intrinsic ReconstructCurveG4(tau::AlgMatElt : flint := false)->SeqEnum
     print "tau not symmetric: replacing by (tau + tau^T)/2";
     tau := (tau + Transpose(tau))/2;
   end if;
-  // TODO: Add Siegel reduction here
+  tau_red, Q := SiegelReduction(tau);
   if flint then
     vprint Reconstruction: "Using Flint";
-    thetas := ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau);
+    thetas := ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau_red);
   else
     vprint Reconstruction: "Using Magma and duplication formula";
-    thetas := ComputeThetas(tau);
+    thetas := ComputeThetas(tau_red);
   end if;
   return ReconstructCurveG4(thetas);
 end intrinsic;
@@ -966,6 +967,3 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := false)->SeqEnum
   
   return [quadric_Q, cubic_Q];
 end intrinsic;
-
-
-
