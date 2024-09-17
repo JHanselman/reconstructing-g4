@@ -849,6 +849,12 @@ intrinsic ReconstructCurveG4(tau::AlgMatElt : flint := false)->SeqEnum
   if flint then
     vprint Reconstruction: "Using Flint";
     thetas := ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau_red);
+    thetas0 := thetas;
+    l := [TCharToIndex(c): c in EvenThetaCharacteristics(4)];
+    ind := [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 21, 23, 25, 27, 29, 31, 33, 34, 37, 38, 41, 42, 45, 46, 49, 52, 53, 56, 57, 60, 61, 64, 65, 66, 67, 68, 73, 74, 75, 76, 81, 83, 86, 88, 89, 91, 94, 96, 97, 98, 103, 104, 105, 106, 111, 112, 113, 116, 118, 119, 121, 124, 126, 127, 129, 130, 131, 132, 133, 134, 135, 136, 145, 147, 149, 151, 154, 156, 158, 160, 161, 162, 165, 166, 171, 172, 175, 176, 177, 180, 181, 184, 186, 187, 190, 191, 193, 194, 195, 196, 205, 206, 207, 208, 209, 211, 214, 216, 218, 220, 221, 223, 225, 226, 231, 232, 235, 236, 237, 238, 241, 244, 246, 247, 250, 251, 253, 256 ];
+    for i in [1..#l] do // change the order of the even thetas
+      thetas[l[i]] := thetas0[ind[i]];  
+    end for;
   else
     vprint Reconstruction: "Using Magma and duplication formula";
     thetas := ComputeThetas(tau_red);
