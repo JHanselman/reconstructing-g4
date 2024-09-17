@@ -317,6 +317,8 @@ end intrinsic;
 function OddThetaPrymInfoHyp(thetas)
 
   CC := Parent(thetas[1]);
+  prec := Precision(CC);
+  RR := RealField(prec);
   chars_even := EvenThetaCharacteristics(3);
   g3thetassq := [];
   for i := 1 to 64 do
@@ -339,7 +341,7 @@ function OddThetaPrymInfoHyp(thetas)
   for i in [1..8] do
      for j in [i+1..8] do
         Mat:=Transpose(Matrix([wp[i], wp[j]]));
-        Append(~bitangents, Eltseq(NumericalKernel(Mat)));
+        Append(~bitangents, Eltseq(NumericalKernel(Mat: Epsilon:=RR!10^(-3*prec/4))));
      end for;
   end for;
   return bitangents;
@@ -439,7 +441,8 @@ end function;
 function ComputeCurve(bitangents, tritangents)
   r:= #tritangents;
   CC := Parent(tritangents[1][1][1]);
-  RR := RealField(Precision(CC));
+  prec := Precision(CC);
+  RR := RealField(prec);  
   CC4:=PolynomialRing(CC,4);
   x:=Matrix(4,1,[CC4.i: i in [1..4]]);
   mats1new:=[(Matrix(4,1, tritangents[i][1])*Matrix(1,4, tritangents[i][2])): i in [1..r]];
@@ -448,7 +451,7 @@ function ComputeCurve(bitangents, tritangents)
 
   Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
   // TODO: this should probably scale with precision
-  vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
+  vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-3*prec/4));
   
   CC3 := PolynomialRing(CC, 3);
   
@@ -464,13 +467,13 @@ function ComputeCurve(bitangents, tritangents)
     Append(~fsq_mat, cs);
   end for;
   fsq_mat := Matrix(fsq_mat);
-  si := NumericalKernel(fsq_mat);
+  si := NumericalKernel(fsq_mat: Epsilon:=RR!10^(-3*prec/4));
   sirows:=Nrows(si);
   
   N:=HorizontalJoin([  DiagonalMatrix(Eltseq(vi[i]))*fsq_mat : i in [1..Nrows(vi) ]]);
   //TODO: Check singular values to see if rank is too small. If so then compute more tritangents.
   DN:=SingularValueDecomposition(N);
-  gammaiinv:=NumericalKernel(N: Epsilon:=RR!(10^(-15)));
+  gammaiinv:=NumericalKernel(N: Epsilon:=RR!10^(-3*prec/4));
   
   DXnew, U, V:=SingularValueDecomposition(Xnew);
   Upart:=Matrix(U[1..7]);
@@ -706,7 +709,8 @@ function ComputeCurveVanTheta0(thetas, v)
 
         r:= #tritangents;
         CC := Parent(tritangents[1][1][1]);
-        RR := RealField(Precision(CC));
+        prec := Precision(CC);
+        RR := RealField(prec);
         CC4:=PolynomialRing(CC,4);
         x:=Matrix(4,1,[CC4.i: i in [1..4]]);
         mats1new:=[(Matrix(4,1, tritangents[i][1])*Matrix(1,4, tritangents[i][2])): i in [1..r]];
@@ -715,7 +719,7 @@ function ComputeCurveVanTheta0(thetas, v)
 
         Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
         //Write("~/github/Genus-4-RM-CM/vanishing-theta-null-debug.m", Sprintf("%m\n", Xnew));
-        vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
+        vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-3*prec/4));
 
         CC3 := PolynomialRing(CC, 3);
 
@@ -733,13 +737,13 @@ function ComputeCurveVanTheta0(thetas, v)
         fsq_mat := Matrix(fsq_mat);
         // TODO: dim of kernel should be 
         // should write a function that takes expected dimension as input and recomputes with more tritangents if kernel has wrong dimension
-        si := NumericalKernel(fsq_mat);
+        si := NumericalKernel(fsq_mat: Epsilon:=RR!10^(-3*prec/4));
         sirows:=Nrows(si);
 
         N:=HorizontalJoin([  DiagonalMatrix(Eltseq(vi[i]))*fsq_mat : i in [1..Nrows(vi) ]]);
        //TODO: Check singular values to see if rank is too big. If so then compute more tritangents.
        DN:=SingularValueDecomposition(N);
-       gammaiinv:=NumericalKernel(N: Epsilon:=RR!(10^(-15)));
+       gammaiinv:=NumericalKernel(N: Epsilon:=RR!10^(-3*prec/4));
 
        DXnew, U, V:=SingularValueDecomposition(Xnew);
        Upart:=Matrix(U[1..7]);
@@ -776,17 +780,27 @@ function ComputeCurveVanTheta0(thetas, v)
         
         S:= NormalForm(Qnew);
 
-  //Compute the matrix S2 whose inverse will transform the normal form into one where all coefficients are 1.
+        //Compute the matrix S2 whose inverse will transform the normal form into one where all coefficients are 1.
 
         S2 := S * Qnew * Transpose(S);
-        for i in [1..3] do
-          S2[i,i] := Sqrt(S2[i,i]);
+        
+        _, ind := Min([Abs(S2[i,i]) : i in [1..4]]); //sometimes the smallest is not the last one
+
+        for i in [1..4] do
+          if i ne ind then 
+            S2[i,i] := Sqrt(S2[i,i]);
+          end if;
         end for;
-        S2[4,4] := 1;
+        S2[ind,ind] := 1;
+
+        L_swap := [1,2,3,4];
+        L_swap[ind] := 4;
+        L_swap[4] := ind;
+        P_swap := PermutationMatrix(CC, L_swap);
 
         I:=CC.1;
   //Coordinate Transformation that maps x^2 + y^2 +z^2 to xy - z^2.
-        DiagToCone := Matrix(CC, 4, 4, [[1,0,0,0],[0,1/2*I,-1/2,0],[0,1/2*I,1/2,0], [0,0,0,1]]);
+        DiagToCone := Matrix(CC, 4, 4, [[1,0,0,0],[0,1/2*I,-1/2,0],[0,1/2*I,1/2,0], [0,0,0,1]])*P_swap;
 
   //Complete Transformation
         QtoCone := DiagToCone * S2^(-1) * S; 
