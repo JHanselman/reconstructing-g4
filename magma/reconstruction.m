@@ -317,6 +317,8 @@ end intrinsic;
 function OddThetaPrymInfoHyp(thetas)
 
   CC := Parent(thetas[1]);
+  prec := Precision(CC);
+  RR := RealField(prec);
   chars_even := EvenThetaCharacteristics(3);
   g3thetassq := [];
   for i := 1 to 64 do
@@ -339,7 +341,7 @@ function OddThetaPrymInfoHyp(thetas)
   for i in [1..8] do
      for j in [i+1..8] do
         Mat:=Transpose(Matrix([wp[i], wp[j]]));
-        Append(~bitangents, Eltseq(NumericalKernel(Mat)));
+        Append(~bitangents, Eltseq(NumericalKernel(Mat: Epsilon:=RR!10^(-3*prec/4))));
      end for;
   end for;
   return bitangents;
@@ -439,7 +441,8 @@ end function;
 function ComputeCurve(bitangents, tritangents)
   r:= #tritangents;
   CC := Parent(tritangents[1][1][1]);
-  RR := RealField(Precision(CC));
+  prec := Precision(CC);
+  RR := RealField(prec);  
   CC4:=PolynomialRing(CC,4);
   x:=Matrix(4,1,[CC4.i: i in [1..4]]);
   mats1new:=[(Matrix(4,1, tritangents[i][1])*Matrix(1,4, tritangents[i][2])): i in [1..r]];
@@ -448,7 +451,7 @@ function ComputeCurve(bitangents, tritangents)
 
   Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
   // TODO: this should probably scale with precision
-  vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
+  vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-3*prec/4));
   
   CC3 := PolynomialRing(CC, 3);
   
@@ -464,13 +467,13 @@ function ComputeCurve(bitangents, tritangents)
     Append(~fsq_mat, cs);
   end for;
   fsq_mat := Matrix(fsq_mat);
-  si := NumericalKernel(fsq_mat);
+  si := NumericalKernel(fsq_mat: Epsilon:=RR!10^(-3*prec/4));
   sirows:=Nrows(si);
   
   N:=HorizontalJoin([  DiagonalMatrix(Eltseq(vi[i]))*fsq_mat : i in [1..Nrows(vi) ]]);
   //TODO: Check singular values to see if rank is too small. If so then compute more tritangents.
   DN:=SingularValueDecomposition(N);
-  gammaiinv:=NumericalKernel(N: Epsilon:=RR!(10^(-15)));
+  gammaiinv:=NumericalKernel(N: Epsilon:=RR!10^(-3*prec/4));
   
   DXnew, U, V:=SingularValueDecomposition(Xnew);
   Upart:=Matrix(U[1..7]);
@@ -706,7 +709,8 @@ function ComputeCurveVanTheta0(thetas, v)
 
         r:= #tritangents;
         CC := Parent(tritangents[1][1][1]);
-        RR := RealField(Precision(CC));
+        prec := Precision(CC);
+        RR := RealField(prec);
         CC4:=PolynomialRing(CC,4);
         x:=Matrix(4,1,[CC4.i: i in [1..4]]);
         mats1new:=[(Matrix(4,1, tritangents[i][1])*Matrix(1,4, tritangents[i][2])): i in [1..r]];
@@ -715,7 +719,7 @@ function ComputeCurveVanTheta0(thetas, v)
 
         Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
         //Write("~/github/Genus-4-RM-CM/vanishing-theta-null-debug.m", Sprintf("%m\n", Xnew));
-        vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-15));
+        vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-3*prec/4));
 
         CC3 := PolynomialRing(CC, 3);
 
@@ -733,13 +737,13 @@ function ComputeCurveVanTheta0(thetas, v)
         fsq_mat := Matrix(fsq_mat);
         // TODO: dim of kernel should be 
         // should write a function that takes expected dimension as input and recomputes with more tritangents if kernel has wrong dimension
-        si := NumericalKernel(fsq_mat);
+        si := NumericalKernel(fsq_mat: Epsilon:=RR!10^(-3*prec/4));
         sirows:=Nrows(si);
 
         N:=HorizontalJoin([  DiagonalMatrix(Eltseq(vi[i]))*fsq_mat : i in [1..Nrows(vi) ]]);
        //TODO: Check singular values to see if rank is too big. If so then compute more tritangents.
        DN:=SingularValueDecomposition(N);
-       gammaiinv:=NumericalKernel(N: Epsilon:=RR!(10^(-15)));
+       gammaiinv:=NumericalKernel(N: Epsilon:=RR!10^(-3*prec/4));
 
        DXnew, U, V:=SingularValueDecomposition(Xnew);
        Upart:=Matrix(U[1..7]);
@@ -776,17 +780,27 @@ function ComputeCurveVanTheta0(thetas, v)
         
         S:= NormalForm(Qnew);
 
-  //Compute the matrix S2 whose inverse will transform the normal form into one where all coefficients are 1.
+        //Compute the matrix S2 whose inverse will transform the normal form into one where all coefficients are 1.
 
         S2 := S * Qnew * Transpose(S);
-        for i in [1..3] do
-          S2[i,i] := Sqrt(S2[i,i]);
+        
+        _, ind := Min([Abs(S2[i,i]) : i in [1..4]]); //sometimes the smallest is not the last one
+
+        for i in [1..4] do
+          if i ne ind then 
+            S2[i,i] := Sqrt(S2[i,i]);
+          end if;
         end for;
-        S2[4,4] := 1;
+        S2[ind,ind] := 1;
+
+        L_swap := [1,2,3,4];
+        L_swap[ind] := 4;
+        L_swap[4] := ind;
+        P_swap := PermutationMatrix(CC, L_swap);
 
         I:=CC.1;
   //Coordinate Transformation that maps x^2 + y^2 +z^2 to xy - z^2.
-        DiagToCone := Matrix(CC, 4, 4, [[1,0,0,0],[0,1/2*I,-1/2,0],[0,1/2*I,1/2,0], [0,0,0,1]]);
+        DiagToCone := Matrix(CC, 4, 4, [[1,0,0,0],[0,1/2*I,-1/2,0],[0,1/2*I,1/2,0], [0,0,0,1]])*P_swap;
 
   //Complete Transformation
         QtoCone := DiagToCone * S2^(-1) * S; 
@@ -835,6 +849,12 @@ intrinsic ReconstructCurveG4(tau::AlgMatElt : flint := false)->SeqEnum
   if flint then
     vprint Reconstruction: "Using Flint";
     thetas := ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau_red);
+    thetas0 := thetas;
+    l := [TCharToIndex(c): c in EvenThetaCharacteristics(4)];
+    ind := [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 21, 23, 25, 27, 29, 31, 33, 34, 37, 38, 41, 42, 45, 46, 49, 52, 53, 56, 57, 60, 61, 64, 65, 66, 67, 68, 73, 74, 75, 76, 81, 83, 86, 88, 89, 91, 94, 96, 97, 98, 103, 104, 105, 106, 111, 112, 113, 116, 118, 119, 121, 124, 126, 127, 129, 130, 131, 132, 133, 134, 135, 136, 145, 147, 149, 151, 154, 156, 158, 160, 161, 162, 165, 166, 171, 172, 175, 176, 177, 180, 181, 184, 186, 187, 190, 191, 193, 194, 195, 196, 205, 206, 207, 208, 209, 211, 214, 216, 218, 220, 221, 223, 225, 226, 231, 232, 235, 236, 237, 238, 241, 244, 246, 247, 250, 251, 253, 256 ];
+    for i in [1..#l] do // change the order of the even thetas
+      thetas[l[i]] := thetas0[ind[i]];  
+    end for;
   else
     vprint Reconstruction: "Using Magma and duplication formula";
     thetas := ComputeThetas(tau_red);
