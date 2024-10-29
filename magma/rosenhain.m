@@ -61,7 +61,7 @@ end function;
 /* Transform Mumford's eta by gamma */
 /* Note that these function are represented by tuples, but we give an evaluation later */
 function EtaFunction(gamma)
-g:=Nrows(gamma)/2;
+g := Nrows(gamma) div 2;
 return [ gamma *v : v in EtaFunction0(g) ];
 end function;
 
