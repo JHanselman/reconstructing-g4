@@ -532,9 +532,7 @@ function ComputeCurve(bitangents, tritangents: method := "Cayley")
       end for;
     end for;
     detqdual:=Determinant(qdual);
-    cubic := detqdual;
-
-
+    cubic := ComputeSqrtHomogeneous(detqdual);
    
   else
 
@@ -880,7 +878,7 @@ function ComputeCurveGeneric(thetas: method := "Cayley")
     print "\n tritangents:", tritangents;
     print "\n bitangents:", bitangents;
   end if;
-  quadric, cubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents);
+  quadric, cubic := ComputeCurve([bitangents[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]], tritangents: method := method);
   return [quadric, cubic];
 end function;
 
