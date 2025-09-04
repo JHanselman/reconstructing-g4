@@ -9,8 +9,8 @@
  */
 
 
-AttachSpec("~/github/reconstructing-g4/magma/spec");
-AttachSpec("~/github/Genus-4/magma/spec");
+AttachSpec("~/reconstructing-g4/magma/spec");
+AttachSpec("~/Genus-4/magma/spec");
 
 
 CC<I> := ComplexField(300);
@@ -24,9 +24,14 @@ Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
 tau := -Pi1^(-1) * Pi2;
 tau := (tau+Transpose(tau))/2;
 tau_red, Q := SiegelReduction(tau);
-err := Abs(SchottkyModularForm(tau_red : prec := 150));
-print "Absolute value of Schottky modular form is", err;
-Eqs := RationalReconstructCurveG4(HorizontalJoin(Pi2, Pi1));
+//err := Abs(SchottkyModularForm(tau_red : prec := 150));
+//print "Absolute value of Schottky modular form is", err;
+
+
+Eqstest := ReconstructCurveG4(ChangeRing(tau_red, ComplexField(75)): method := "Cayley");
+
+if false then
+Eqs := RationalReconstructCurveG4(HorizontalJoin(Pi2, Pi1): method := "");
 print "Curve found! The equations are:", Eqs;
 
 // improve equation
@@ -63,3 +68,4 @@ end for;
 tt1 := Cputime();
 printf "Total time for verification: %o s\n", tt1-tt0;
 print "L-functions match for all primes up to 1000";
+end if;

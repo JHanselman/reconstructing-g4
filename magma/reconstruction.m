@@ -438,18 +438,41 @@ function ComputeSquareRootOnP1xP1(detqdualonsegre)
   return SegreCubic;
 end function;
 
-function ComputeCurve(bitangents, tritangents)
+function ComputeSqrtHomogeneous(F)
+	R := Parent(F);
+	CC := BaseRing(R);
+	n := Rank(R);
+	Rmi := PolynomialRing(CC, n-1);
+	d := Degree(F) div 2;
+	_, i0 := Max([Abs(MonomialCoefficient(F, R.i^(2*d))): i in [1..n]]);
+	varsmi := [R.i: i in [1..i0-1] cat [i0+1..n]];
+	coeff := MonomialCoefficient(F, R.i0^(2*d));
+	Fnorm := F/coeff;
+	ret := R.i0^d;
+	for i in [1..d] do;
+		rem := Fnorm - ret^2;
+	        mons := [Evaluate(mon, varsmi): mon in MonomialsOfDegree(Rmi, i)];
+		ret +:= 1/2 * &+[MonomialCoefficient(rem, m*R.i0^(2*d-i))*m*R.i0^(d-i): m in mons];
+	end for;
+	return Sqrt(coeff)*ret;
+end function;
+
+
+function ComputeCurve(bitangents, tritangents: method := "Cayley")
   r:= #tritangents;
   CC := Parent(tritangents[1][1][1]);
   prec := Precision(CC);
   RR := RealField(prec);  
   CC4:=PolynomialRing(CC,4);
+  v:=Matrix(CC4, [[CC4.1, CC4.2, CC4.3, CC4.4]]);
   x:=Matrix(4,1,[CC4.i: i in [1..4]]);
   mats1new:=[(Matrix(4,1, tritangents[i][1])*Matrix(1,4, tritangents[i][2])): i in [1..r]];
   mats1new:=[(m +Transpose(m))/2 : m in mats1new];
   mats1newx:=Matrix(CC4, 1, r,[(Transpose(x)*ChangeRing(mats1new[i], CC4)*x)[1,1]: i in [1..r]]);
 
   Xnew:=Matrix([&cat[[m[i,j]: j in [i..4]]: i in [1..4]] : m in mats1new]  );
+  Xnewsym:=Matrix([Eltseq(m) : m in mats1new]  );
+
   // TODO: this should probably scale with precision
   vi:=NumericalKernel(Xnew: Epsilon:=RR!10^(-3*prec/4));
   
@@ -486,6 +509,35 @@ function ComputeCurve(bitangents, tritangents)
   Qnew:=&+[Eltseq(Basis(Qpre1)[1])[i]*mats1new[i]: i in [1..r] ];
   dualelt:=mats1newx*ChangeRing(Transpose(Upart), CC4);
   
+
+  if method eq "Cayley" then
+    VCeta := Transpose(Matrix([Eltseq(mat): mat in mats1new]));
+    VCetaperp := Basis(Kernel(VCeta));
+    VCetaperpmats := [Matrix(4,4, vc): vc in VCetaperp];
+    VCetaperpmats :=[(m +Transpose(m))/2 : m in VCetaperpmats];
+    Qsharp := (VCetaperpmats[1]^-1+VCetaperpmats[2]^-1)^-1;
+    
+    cond := Upart*Xnewsym* Matrix(16, 1, Eltseq(Qsharp));
+    phiext := HorizontalJoin(phi, cond);
+    //psi := HorizontalJoin(IdentityMatrix(CC, 6), ZeroMatrix(CC, 6, 1)) * phicond^-1 ;
+    phiTinv:=ChangeRing(Transpose(phiext)^(-1), CC4);
+    phiL:=dualelt*phiTinv;
+    qdual:=ZeroMatrix(CC4, 3,3);
+    count:=1;
+    for i in [1..3] do
+      for j in [i..3] do
+        qdual[i,j]:=phiL[1,count];
+        qdual[j, i]:=phiL[1, count];
+        count+:=1;
+      end for;
+    end for;
+    detqdual:=Determinant(qdual);
+    cubic := detqdual;
+
+
+   
+  else
+
   D, U, V:=SingularValueDecomposition(phi);
   phiext:=HorizontalJoin(phi, Matrix(7,1, Eltseq(Conjugate(U)[7])));
   if IsVerbose("User1", 1) then
@@ -525,7 +577,6 @@ function ComputeCurve(bitangents, tritangents)
   QtoSegre := IdToSegre * (S2)^(-1) * S; 
 
 
-  v:=Matrix(CC4, [[CC4.1, CC4.2, CC4.3, CC4.4]]);
 
   //Apply coordinate transformation to detqdual to map the quadric to the Segre quadric
   detqdualonsegre := Evaluate(detqdual, Eltseq((v * ChangeRing(QtoSegre, CC4))[1]));
@@ -537,6 +588,7 @@ function ComputeCurve(bitangents, tritangents)
 
   //Reverse the coordinate transformation
   cubic := Evaluate(SegreCubic, Eltseq((v * ChangeRing(QtoSegre^(-1), CC4))[1]));
+  end if;
   quadric:=(v*ChangeRing(Qnew, CC4) *Transpose(v))[1,1];
   return quadric, cubic;
 
@@ -821,7 +873,7 @@ function ComputeCurveVanTheta0(thetas, v)
 
 end function;
 
-function ComputeCurveGeneric(thetas)
+function ComputeCurveGeneric(thetas: method := "Cayley")
   tritangents := ComputeTritangents(thetas);
   bitangents := ComputeBitangents(thetas);
   if IsVerbose("User1", 1) then
@@ -839,7 +891,7 @@ function ComputeCurveHypEll(thetas, v0s)
   return rosens;
 end function;
 
-intrinsic ReconstructCurveG4(tau::AlgMatElt : flint := false)->SeqEnum
+intrinsic ReconstructCurveG4(tau::AlgMatElt : flint := false, method := "Cayley")->SeqEnum
 {}
   if not IsSymmetric(tau) then
     print "tau not symmetric: replacing by (tau + tau^T)/2";
@@ -859,15 +911,15 @@ intrinsic ReconstructCurveG4(tau::AlgMatElt : flint := false)->SeqEnum
     vprint Reconstruction: "Using Magma and duplication formula";
     thetas := ComputeThetas(tau_red);
   end if;
-  return ReconstructCurveG4(thetas);
+  return ReconstructCurveG4(thetas: method := method);
 end intrinsic;
 
-intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
+intrinsic ReconstructCurveG4(thetas::SeqEnum: method := "Cayley")->SeqEnum
 {}
   v0s := FindDelta(thetas);
   NrOfZeros := #v0s;
   if NrOfZeros eq 0 then
-    return ComputeCurveGeneric(thetas);
+  return ComputeCurveGeneric(thetas: method := method);
   end if;
   
    if NrOfZeros eq 1 then
@@ -882,7 +934,7 @@ intrinsic ReconstructCurveG4(thetas::SeqEnum)->SeqEnum
 end intrinsic;
 
 
-intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := false)->SeqEnum
+intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := false, method := "Cayley")->SeqEnum
   {}
   QQ := Rationals();
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
@@ -913,7 +965,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := false)->SeqEnum
     thetas := ComputeThetas(tau);
   end if;
   vprint Reconstruction: "Reconstructing curve over CC";
-  quadric, cubic := Explode(ReconstructCurveG4(thetas));
+  quadric, cubic := Explode(ReconstructCurveG4(thetas: method := method));
   vprint Reconstruction: "Trying to recognize over QQ";
   CC4 := Parent(quadric);
   CC := BaseRing(CC4);
