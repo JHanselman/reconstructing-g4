@@ -30,6 +30,7 @@ end intrinsic;
 
 declare verbose Theta, 1;
 
+/*
 intrinsic Real(A::AlgMatElt) -> AlgMatElt
   {}
   return Matrix(Nrows(A), Ncols(A), [[Real(A[i,j]) : j in [1..Ncols(A)]] : i in [1..Nrows(A)]]);
@@ -39,6 +40,7 @@ intrinsic Imaginary(A::AlgMatElt) -> AlgMatElt
   {}
   return Matrix(Nrows(A), Ncols(A), [[Imaginary(A[i,j]) : j in [1..Ncols(A)]] : i in [1..Nrows(A)]]);
 end intrinsic;
+*/
 
 intrinsic L2Norm(S::SeqEnum[RngElt]) -> RngElt
   {}
