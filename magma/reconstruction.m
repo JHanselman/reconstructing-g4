@@ -86,6 +86,8 @@ function ComputeTritangents(thetas)
     for s in S1 do
       ss := Eltseq(s);
       T1 *:= thetas[TCharToIndex([ss[1..4],ss[5..8]])];
+      
+
     end for;
 
     for s in S2 do
@@ -93,6 +95,7 @@ function ComputeTritangents(thetas)
       T2 *:= thetas[TCharToIndex([ss[1..4],ss[5..8]])];
     end for;
      constant[k] := signs[1]*T1 + signs[2]*T2;
+     print "Computing D(xi)", k, signs[1], [TCharToIndex([ss[1..4],ss[5..8]]) where ss := Eltseq(s): s in S1], signs[2], [TCharToIndex([ss[1..4],ss[5..8]]) where ss := Eltseq(s): s in S2], "\n";
      if IsVerbose("User1",1) then
         print "precision loss in constant=", Abs(constant[k]/T1);
   end if;

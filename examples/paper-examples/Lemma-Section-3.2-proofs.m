@@ -132,6 +132,7 @@ tritpairs10 := [tritpairs[i]: i in [10, 23, 4, 20,  17, 9, 12,  1, 5, 11]];
 
 p:= 37;R4 := PolynomialRing(GF(p^2), 4);
 mats1new := tritpairs10;
+Xnewsym:=Matrix([Eltseq(m) : m in mats1new]  );
 CC4<x0,x1,x2,x3> := PolynomialRing(GF(p), 4);
   x:=Matrix(4,1,[CC4.i: i in [1..4]]);
   r:= #tritpairs10;
@@ -164,10 +165,18 @@ Qpre:=Kernel(phi);
   Qpre1:=Qpre*Upart;
   Qnew:=&+[Eltseq(Basis(Qpre1)[1])[i]*mats1new[i]: i in [1..r] ];
   dualelt:=mats1newx*ChangeRing(Transpose(Upart), CC4);
-basis := ExtendBasis(Image(Transpose(phi)), RSpace(GF(p),7));
-  phiext:=HorizontalJoin(phi, Matrix(7,1, basis[7]));
+
+   VCeta := Transpose(Matrix([Eltseq(mat): mat in mats1new]));
+    VCetaperp := Basis(Kernel(VCeta));
+    VCetaperpmats := [Matrix(4,4, vc): vc in VCetaperp];
+    VCetaperpmats :=[(m +Transpose(m))/2 : m in VCetaperpmats];
+    Qsharp := (VCetaperpmats[1]^-1+VCetaperpmats[2]^-1)^-1;
+
+    cond := Upart*Xnewsym* Matrix(16, 1, Eltseq(Qsharp));
+    phiext := HorizontalJoin(phi, cond);
+
   phiTinv:=ChangeRing(Transpose(phiext)^(-1), CC4);
-  print "phiTinv";
+  print "psi";
   print phiTinv;
   phiL:=dualelt*phiTinv;
   qdual:=ZeroMatrix(CC4, 3,3);

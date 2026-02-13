@@ -1,0 +1,4 @@
+looking for points on Igusa quartic
+
+[Interrupted]
+Unknown command "quit;"
