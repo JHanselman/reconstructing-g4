@@ -126,12 +126,20 @@ function AllDuplication(fund_thetas)
   return ThetaProducts;
 end function;
 
-intrinsic ComputeThetas(tau::Mtrx) -> SeqEnum
+intrinsic ComputeThetas(tau::Mtrx: flint := true) -> SeqEnum
 {}
+  QQ := Rationals();
+  CC := BaseRing(tau);
   tau := tau/2;
   g := Nrows(tau);
-  vprint Theta: "Computing theta constants with Magma";
-  thconstants := [ ThetaMagma(i,tau) : i in [0..2^g-1]];
+  if flint then
+        TChars:= [Matrix(QQ, 2*g,1,&cat(IndexToTChar(i,g)))/2: i in [0..2^(g)-1]];
+        thconstants := [ThetaFlint(c, ZeroMatrix(CC,g,1), tau): c in TChars];
+
+  else
+	  vprint Theta: "Computing theta constants with Magma";
+	  thconstants := [ ThetaMagma(i,tau) : i in [0..2^g-1]];
+  end if;
   vprint Theta: "Applying duplication formula";
   allthetas2tau := AllDuplication(thconstants);
   allthetas := [Sqrt(allthetas2tau[i+1]) * SignT(i, 2* tau) : i in [0..2^(2*g)-1]];

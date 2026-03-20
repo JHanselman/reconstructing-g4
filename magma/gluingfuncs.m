@@ -5119,14 +5119,14 @@ intrinsic EvenModel(f::RngUPolElt) -> Any
   return f;
 end intrinsic;
 
-intrinsic findV(RS1::RieSrf, RS2::RieSrf, roots_f2::SeqEnum) -> Any
+intrinsic findV(RS1::RieSrf, RS2::RieSrf, roots_f1::SeqEnum, roots_f2::SeqEnum) -> Any
   {}
   f1 := RS1`DefiningPolynomial;
   L := Parent(roots_f2[1]);
   v := InfinitePlaces(L)[1];
   
   sort_roots := RS1`Ordering;
-  roots_f1 := [Evaluate(r[1], v): r in Sort(Roots(f1, L))];
+  roots_f1 := [Evaluate(r, v): r in roots_f1];
   roots_f2 := [Evaluate(r, v): r in roots_f2];
   HB1 := [e`EP : e in HomologyBasis(RS1)`Edges];
   HB2 := [e`EP : e in HomologyBasis(RS2)`Edges];
