@@ -935,10 +935,11 @@ intrinsic ReconstructCurveG4(thetas::SeqEnum: method := "Cayley")->SeqEnum
 end intrinsic;
 
 
-intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := false, method := "Cayley")->SeqEnum
+intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := true, method := "Cayley")->SeqEnum
   {}
   QQ := Rationals();
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
+  CC:=BaseRing(Pi);
   tau := Pi1^-1*Pi2;
   if not IsSymmetric(tau) then
     vprint Reconstruction:  "tau not symmetric: replacing by (tau + tau^T)/2";
@@ -958,9 +959,10 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := false, method := "Cayle
   tau := Pi1^-1*Pi2;
   vprint Reconstruction:  tau-tau_red;
   vprint Reconstruction: "Computing thetas";
+  TChars:= [Matrix(QQ, 8,1,&cat(IndexToTChar(i,4)))/2: i in [1..2^(8)]];
   if flint then
     vprint Reconstruction: "Using Flint";
-    thetas := ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau);
+    thetas := [ThetaFlint(c, ZeroMatrix(CC,4,1), tau): c in TChars];
   else
     vprint Reconstruction: "Using Magma and duplication formula";
     thetas := ComputeThetas(tau);

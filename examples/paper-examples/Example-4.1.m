@@ -9,8 +9,8 @@
  */
 
 
-  AttachSpec("~/github/CHIMP/CHIMP.spec");
-  AttachSpec("~/github/reconstructing-g4/magma/spec");
+  AttachSpec("/Users/jeroenhanselman/CHIMP/CHIMP.spec");
+  AttachSpec("/Users/jeroenhanselman/reconstructing-g4/magma/spec");
 
   SetDebugOnError(true);
   SetVerbose("User1",1);
