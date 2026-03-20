@@ -514,9 +514,20 @@ function ComputeCurve(bitangents, tritangents: method := "Cayley")
   
 
   if method eq "Cayley" then
-    VCeta := Transpose(Matrix([Eltseq(mat): mat in mats1new]));
+
+    VCeta := Transpose(Matrix([&cat[[mat[i,j]: j in [i..4]]: i in [1..4]]: mat in mats1new]));
     VCetaperp := Basis(Kernel(VCeta));
-    VCetaperpmats := [Matrix(4,4, vc): vc in VCetaperp];
+
+    VCetaperpmats := [ZeroMatrix(CC,4,4): vc in VCetaperp];
+    count := 1;
+    for i in [1..4] do
+        for j in [i..4] do
+                for nu in [1..#VCetaperp] do
+                        VCetaperpmats[nu][i,j] := VCetaperp[nu][count];
+                end for;
+                count +:= 1;
+        end for;
+    end for;
     VCetaperpmats :=[(m +Transpose(m))/2 : m in VCetaperpmats];
     Qsharp := (VCetaperpmats[1]^-1+VCetaperpmats[2]^-1)^-1;
     
