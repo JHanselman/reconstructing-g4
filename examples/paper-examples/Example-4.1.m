@@ -46,7 +46,35 @@
     end if;
   end for;
 
-  roots_f2_rev := [el[1] : el in Roots(Reverse(f2),K2)];
+  /* Find the maximal isotropic subspace V given by the graph of the isomorphism from Jac(X1)[2] to Jac(X2)[2] that is 
+     induced from the given ordering of the Weierstrass points.
+  */
+  print "Computing maximal isotropic subspace";
+  for rs_perm in roots_f2_perms do
+    rs, perm := Explode(rs_perm);
+    V:= findV(RS1, RS2, rs);
+    //print V;
+
+    //Compute big period matrix
+    print "Computing period matrices";
+    P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
+    P := DiagonalJoin(P1, P2);
+    Q := QFromPVFor22(P, V);
+    Pi1, Pi2 := SplitBigPeriodMatrix(Q);
+    tau := Pi1^-1*Pi2;
+    //tau := Pi1*Pi2^-1;
+    sch := SchottkyModularForm(tau);
+    if Abs(sch) lt 10^(-prec/2) then
+      print perm;
+      print sch;
+      print "----------------------";
+    end if;
+  end for;
+
+  print "Trying reverse of f2";
+  f2_rev := Reverse(f2);
+  RS2_rev := RiemannSurface(f2_rev,2 : Precision := prec);
+  roots_f2_rev := [el[1] : el in Roots(f2_rev,K2)];
   roots_f2_rev_perms := [];
   for perm in Sym(5) do
     rs2 := [roots_f2_rev[i^perm] : i in [1..#roots_f2_rev]];
@@ -56,34 +84,28 @@
     end if;
   end for;
 
-  /* Find the maximal isotropic subspace V given by the graph of the isomorphism from Jac(X1)[2] to Jac(X2)[2] that is 
-     induced from the given ordering of the Weierstrass points.
-  */
   print "Computing maximal isotropic subspace";
-  
-  for j->roots_list in [roots_f2_perms, roots_f2_rev_perms] do
-    for rs_perm in roots_f2_perms do
-      rs, perm := Explode(rs_perm);
-      V:= findV(RS1, RS2, rs);
-      //print V;
+  for rs_perm in roots_f2_rev_perms do
+    rs, perm := Explode(rs_perm);
+    V:= findV(RS1, RS2_rev, rs);
+    //print V;
 
-      //Compute big period matrix
-      print "Computing period matrices";
-      P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
-      P := DiagonalJoin(P1, P2);
-      Q := QFromPVFor22(P, V);
-      Pi1, Pi2 := SplitBigPeriodMatrix(Q);
-      tau := Pi1^-1*Pi2;
-      //tau := Pi1*Pi2^-1;
-      sch := SchottkyModularForm(tau);
-      //if Abs(sch) lt 10^(-prec/2) then
-        print j;
-        print perm;
-        print sch;
-        print "----------------------";
-      //end if;
-    end for;
+    //Compute big period matrix
+    print "Computing period matrices";
+    P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2_rev);
+    P := DiagonalJoin(P1, P2);
+    Q := QFromPVFor22(P, V);
+    Pi1, Pi2 := SplitBigPeriodMatrix(Q);
+    tau := Pi1^-1*Pi2;
+    //tau := Pi1*Pi2^-1;
+    sch := SchottkyModularForm(tau);
+    if Abs(sch) lt 10^(-prec/2) then
+      print perm;
+      print sch;
+      print "----------------------";
+    end if;
   end for;
+
  
   //Compute genus 4 curve whose Jacobian is isomorphic to Jac(X1) x Jac(X2)
   //print "Recovering equations of genus 4 curve";

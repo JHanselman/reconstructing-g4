@@ -5138,10 +5138,8 @@ intrinsic findV(RS1::RieSrf, RS2::RieSrf, roots_f2::SeqEnum) -> Any
   p1 := Identity(S6);
   p2 := Identity(S6);
   
-  /*
   Sort(~roots_f1, sort_roots, ~p1);
   Sort(~roots_f2, sort_roots, ~p2);
-  */
 
   /*
   print "minpolys roots_f1";
@@ -5153,11 +5151,9 @@ intrinsic findV(RS1::RieSrf, RS2::RieSrf, roots_f2::SeqEnum) -> Any
   p1 := Eltseq(p1);
   p2 := Eltseq(p2);
   
-  /*
   print "root permutations:";
   printf "p1 = %o\n", p1;
   printf "p2 = %o\n", p2;
-  */
 
   if #p1 ne 6 then
     Append(~p1, 6);
