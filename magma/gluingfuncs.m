@@ -5135,17 +5135,30 @@ intrinsic findV(RS1::RieSrf, RS2::RieSrf, roots_f2::SeqEnum) -> Any
   SymB2 := ChangeRing(RS2`HomologyBasis[3], GF(2));
   
   S6 := Sym(6);
-  
   p1 := Identity(S6);
   p2 := Identity(S6);
   
-  
-  
+  /*
   Sort(~roots_f1, sort_roots, ~p1);
   Sort(~roots_f2, sort_roots, ~p2);
+  */
+
+  /*
+  print "minpolys roots_f1";
+  print [Polredabs(MinimalPolynomial(el,2)) : el in roots_f1];
+  print "minpolys roots_f2";
+  print [Polredabs(MinimalPolynomial(el,2)) : el in roots_f2];
+  */
+
   p1 := Eltseq(p1);
   p2 := Eltseq(p2);
   
+  /*
+  print "root permutations:";
+  printf "p1 = %o\n", p1;
+  printf "p2 = %o\n", p2;
+  */
+
   if #p1 ne 6 then
     Append(~p1, 6);
   end if;
@@ -5156,6 +5169,13 @@ intrinsic findV(RS1::RieSrf, RS2::RieSrf, roots_f2::SeqEnum) -> Any
   
   p1 := S6!p1;
   p2 := S6!p2;
+
+  /*
+  print "root permutations, with 6:";
+  printf "p1 = %o\n", p1;
+  printf "p2 = %o\n", p2;
+*/
+
   
   M1 := ZeroMatrix(GF(2), 6, #HB1);
   M2 := ZeroMatrix(GF(2), 6, #HB2);
@@ -5177,9 +5197,9 @@ intrinsic findV(RS1::RieSrf, RS2::RieSrf, roots_f2::SeqEnum) -> Any
   M2 := M_p2^(-1) * M2 * Transpose(SymB2);
   
   MM := Matrix(GF(2), [[1,1,0,0,0],
-                                 [0,0,1,1,0],
-                                 [0,1,1,1,1],
-                                 [0,0,0,1,1]
+                       [0,0,1,1,0],
+                       [0,1,1,1,1],
+                       [0,0,0,1,1]
                                  ]);
                                  
   M1 +:= Matrix(GF(2), 6, 1, [1,1,1,1,1,1]) * Matrix(GF(2), M1[6]);

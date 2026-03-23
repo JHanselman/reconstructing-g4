@@ -951,6 +951,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := false, method := "Cayle
   QQ := Rationals();
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
+  g := Nrows(tau);
   if not IsSymmetric(tau) then
     vprint Reconstruction:  "tau not symmetric: replacing by (tau + tau^T)/2";
     tau := (tau + Transpose(tau))/2;
@@ -971,7 +972,8 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := false, method := "Cayle
   vprint Reconstruction: "Computing thetas";
   if flint then
     vprint Reconstruction: "Using Flint";
-    thetas := ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau);
+    //thetas := ThetaFlint(Matrix([[0] : i in [1..2*g]]), Matrix([[0] : i in [1..g]]), tau);
+    thetas := ThetaFlint(Matrix([[0] : i in [1..g]]), tau);
   else
     vprint Reconstruction: "Using Magma and duplication formula";
     thetas := ComputeThetas(tau);
