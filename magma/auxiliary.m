@@ -56,7 +56,9 @@ intrinsic TritangentPlane(Pi::ModMatFldElt, char::SeqEnum) -> SeqEnum
   cs := [];
   for i := 1 to g do
     dz := [0,0,0,0];
-    dz[i] := 1;
+    
+    ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau);
+
     Append(~cs, Theta([CC | 0,0,0,0], tau : char := char, dz := [dz], prec := prec));
   end for;
   cs := Eltseq(Matrix(1,g,cs)*(Pi1^-1));
