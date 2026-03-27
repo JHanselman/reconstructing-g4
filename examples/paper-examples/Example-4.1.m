@@ -13,7 +13,8 @@
   AttachSpec("../../magma/spec");
 
   SetDebugOnError(true);
-  SetVerbose("User1",1);
+  //SetVerbose("User1",1);
+  SetVerbose("Reconstruction",1);
   /* Consider the hyperelliptic curves
     X1 : y^2 = f1
     X2 : y^2 = f2
@@ -48,8 +49,8 @@
  
   //Compute genus 4 curve whose Jacobian is isomorphic to Jac(X1)
   print "Recovering equations of genus 4 curve";
-  ReconstructCurveG4(-SmallPeriodMatrix(Q));
-  //  Eqs := RationalReconstructCurveG4(Q);
+  //res := ReconstructCurveG4(SmallPeriodMatrix(Q)^-1);
+  Eqs := RationalReconstructCurveG4(Q);
 
 
 

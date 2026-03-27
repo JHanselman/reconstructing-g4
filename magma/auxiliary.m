@@ -56,15 +56,26 @@ intrinsic TritangentPlane(Pi::ModMatFldElt, char::SeqEnum) -> SeqEnum
   cs := [];
   for i := 1 to g do
     dz := [0,0,0,0];
-    
-    ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau);
-
+    dz[i] := 1;
     Append(~cs, Theta([CC | 0,0,0,0], tau : char := char, dz := [dz], prec := prec));
   end for;
   cs := Eltseq(Matrix(1,g,cs)*(Pi1^-1));
-  //cs := [cs[i]/cs[g] : i in [1..g]];
   return cs;
 end intrinsic;
+
+intrinsic TritangentPlaneNumerical(Pi::ModMatFldElt, char::SeqEnum) -> SeqEnum
+  {Given a big period matrix Pi for a genus 4 curve and an odd theta characteristic char, return the corresponding tritangent plane}
+
+  CC := BaseRing(Pi);
+  prec := Precision(CC);
+  Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
+  tau := Pi1^-1*Pi2;
+  g := Nrows(tau);
+  cs := ThetaDerivativesNumerical(char, tau);
+  cs := Eltseq(Matrix(1,g,cs)*(Pi1^-1));
+  return cs;
+end intrinsic;
+
 
 intrinsic CanonicalImage(S::RieSrf : diffs := []) -> Crv
   {Given a Riemann surface S, return the canonical image and canonical embedding. If differentials are provided, these are used to define the canonical embedding}
