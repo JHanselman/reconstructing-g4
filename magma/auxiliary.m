@@ -9,6 +9,7 @@
  */
 
 
+import "../../CHIMP/Theta.Magma/Theta.m": CharacteristicToInteger;
 
 //function SplitBigPeriodMatrix(Pi)
 intrinsic SplitBigPeriodMatrix(Pi::ModMatFldElt) -> Any
@@ -45,25 +46,24 @@ intrinsic IndexToTChar(index::RngIntElt, g::RngIntElt) -> SeqEnum
 end intrinsic;
 
 
-intrinsic TritangentPlane(Pi::ModMatFldElt, char::SeqEnum) -> SeqEnum
-  {Given a big period matrix Pi for a genus 4 curve and an odd theta characteristic char, return the corresponding tritangent plane}
+intrinsic TritangentPlanes(Pi::ModMatFldElt, chars::SeqEnum) -> SeqEnum
+  {Given a big period matrix Pi for a genus 4 curve and a list of odd theta characteristics chars, return the corresponding tritangent planes}
 
   CC := BaseRing(Pi);
   prec := Precision(CC);
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
   g := Nrows(tau);
-  cs := [];
-  for i := 1 to g do
-    dz := [0,0,0,0];
-    
-    ThetaFlint(Matrix([[0]]), Matrix([[0]]), tau);
-
-    Append(~cs, Theta([CC | 0,0,0,0], tau : char := char, dz := [dz], prec := prec));
+  result := [];
+  thetas_plus_derivatives := ThetaFlint(Matrix(CC, 4, 1, [0,0,0,0]), tau : ord:=1);
+  for char in chars do
+    n := CharacteristicToInteger(char);
+    Th_derivs := [thetas_plus_derivatives[n+1][i] : i in [2..5]];
+    Th_derivs := Eltseq(Matrix(1, g, Th_derivs)*(Pi1^-1));
+    Append(~result, Th_derivs);
   end for;
-  cs := Eltseq(Matrix(1,g,cs)*(Pi1^-1));
-  //cs := [cs[i]/cs[g] : i in [1..g]];
-  return cs;
+
+  return result;
 end intrinsic;
 
 intrinsic CanonicalImage(S::RieSrf : diffs := []) -> Crv

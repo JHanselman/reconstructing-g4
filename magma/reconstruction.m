@@ -962,20 +962,21 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := true, method := "Cayley
   X:=Matrix(CC4, 4,1, [CC4.i: i in [1..4]]);
 
   tritangentbasis := [
-    [GF(2)|1, 1, 1, 0, 1, 1, 1, 0],
-    [GF(2)|1, 0, 1, 0, 0, 0, 1, 0],
-    [GF(2)|1, 1, 1, 0, 0, 0, 1, 0],
-    [GF(2)|1, 0, 1, 0, 0, 1, 1, 0],
-    [GF(2)|0, 1, 1, 0, 0, 1, 0, 0]];
+    1/2*Matrix(Rationals(), 8, 1, [1, 1, 1, 0, 1, 1, 1, 0]),
+    1/2*Matrix(Rationals(), 8, 1, [1, 0, 1, 0, 0, 0, 1, 0]),
+    1/2*Matrix(Rationals(), 8, 1, [1, 1, 1, 0, 0, 0, 1, 0]),
+    1/2*Matrix(Rationals(), 8, 1, [1, 0, 1, 0, 0, 1, 1, 0]),
+    1/2*Matrix(Rationals(), 8, 1, [0, 1, 1, 0, 0, 1, 0, 0])];
 
-  TTB:=[];
+  TTB := TritangentPlanes(Pi, tritangentbasis);
   
   vprint Reconstruction: "Computing tritangents";
-  for c in tritangentbasis do
+  /*for c in tritangentbasis do
     chara := [Integers()!v : v in Eltseq(c)];
     chara := [chara[1..4], chara[5..8]];
     Append(~TTB, TritangentPlane(Pi, chara));
   end for;
+  */
 
   TtoS := Matrix(TTB[1..4]);
   D := DiagonalMatrix(Eltseq(Vector(TTB[5]) * (TtoS)^-1));

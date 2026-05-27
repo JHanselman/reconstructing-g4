@@ -130,14 +130,13 @@ intrinsic ComputeThetas(tau::Mtrx: flint := true) -> SeqEnum
 {}
   QQ := Rationals();
   CC := BaseRing(tau);
-  tau := tau/2;
   g := Nrows(tau);
   if flint then
-        TChars:= [Matrix(QQ, 2*g,1,&cat(IndexToTChar(i,g)))/2: i in [0..2^(g)-1]];
-        thconstants := [ThetaFlint(c, ZeroMatrix(CC,g,1), tau): c in TChars];
-
+        thconstants := [th[1] : th in ThetaFlint(ZeroMatrix(CC,g,1), tau)];
+        return  thconstants[2..#thconstants] cat [thconstants[1]];
   else
 	  vprint Theta: "Computing theta constants with Magma";
+    tau := tau/2;
 	  thconstants := [ ThetaMagma(i,tau) : i in [0..2^g-1]];
   end if;
   vprint Theta: "Applying duplication formula";

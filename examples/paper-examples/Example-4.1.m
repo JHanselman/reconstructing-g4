@@ -12,6 +12,8 @@
   AttachSpec("../../../CHIMP/CHIMP.spec");
   AttachSpec("../../magma/spec");
 
+
+
   SetDebugOnError(true);
   SetVerbose("User1",1);
   /* Consider the hyperelliptic curves
@@ -45,6 +47,10 @@
   P1 := BigPeriodMatrix(RS1); P2 := BigPeriodMatrix(RS2);
   P := DiagonalJoin(P1, P2);
   Q := QFromPVFor22(P, V);
+
+  CC := BaseRing(Parent(Q));
+  call_python_flint_schottky( -SmallPeriodMatrix(Q), [CC | 0,0,0,0])
+ 
  
   //Compute genus 4 curve whose Jacobian is isomorphic to Jac(X1)
   print "Recovering equations of genus 4 curve";
