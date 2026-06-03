@@ -49,7 +49,7 @@
   Q := QFromPVFor22(P, V);
 
   CC := BaseRing(Parent(Q));
-  call_python_flint_schottky( -SmallPeriodMatrix(Q), [CC | 0,0,0,0])
+  //call_python_flint_schottky( -SmallPeriodMatrix(Q), [CC | 0,0,0,0]);
  
  
   //Compute genus 4 curve whose Jacobian is isomorphic to Jac(X1)

@@ -95,7 +95,6 @@ function ComputeTritangents(thetas)
       T2 *:= thetas[TCharToIndex([ss[1..4],ss[5..8]])];
     end for;
      constant[k] := signs[1]*T1 + signs[2]*T2;
-     print "Computing D(xi)", k, signs[1], [TCharToIndex([ss[1..4],ss[5..8]]) where ss := Eltseq(s): s in S1], signs[2], [TCharToIndex([ss[1..4],ss[5..8]]) where ss := Eltseq(s): s in S2], "\n";
      if IsVerbose("User1",1) then
         print "precision loss in constant=", Abs(constant[k]/T1);
   end if;
@@ -437,7 +436,6 @@ function ComputeSquareRootOnP1xP1(detqdualonsegre)
       SegreCubic +:= xy[[i,j]] * P3mons[[i,j]];
     end for;
   end for;
-  print sqrt^2-f;
   return SegreCubic;
 end function;
 
@@ -952,9 +950,15 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := true, method := "Cayley
     thetas := [ThetaFlint(c, ZeroMatrix(CC,4,1), tau): c in TChars];
     vprint Reconstruction: "Using Magma and duplication formula";
     */
+  t0 := Cputime();
   thetas := ComputeThetas(tau: flint:= flint);
+  t1:=Cputime();
+  printf "Thetas took %o\n", t1-t0;
   vprint Reconstruction: "Reconstructing curve over CC";
+  t2:= Cputime();
   quadric, cubic := Explode(ReconstructCurveG4(thetas: method := method));
+  t3:= Cputime();
+  printf "Reconstructing curve over CC took %o\n", t3-t2;
   vprint Reconstruction: "Trying to recognize over QQ";
   CC4 := Parent(quadric);
   CC := BaseRing(CC4);
