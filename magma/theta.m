@@ -571,3 +571,21 @@ intrinsic SiegelReduction(tau::AlgMatElt) -> Any
     end if;
   end while;
 end intrinsic;
+
+intrinsic ThetaDerivativesNumerical(char::SeqEnum, tau::AlgMatElt : prec:=-1) -> Any
+  {Compute numerical derivates of theta function at origin}
+  CC<I> := BaseRing(Parent(tau));
+  g := Nrows(tau);
+  if prec eq -1 then
+    prec := Precision(CC);
+  end if;
+  epsilon := CC!10^(-prec);
+  thetas := [];
+  for i := 1 to g do
+    a:= ZeroMatrix(CC,4,1);
+    a[i] := epsilon;
+    Append(~thetas, ThetaFlint(char, epsilon, tau)/epsilon);
+  end for;
+  return thetas;
+end intrinsic;
+

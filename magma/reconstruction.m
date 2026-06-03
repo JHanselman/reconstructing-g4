@@ -512,9 +512,20 @@ function ComputeCurve(bitangents, tritangents: method := "Cayley")
   
 
   if method eq "Cayley" then
-    VCeta := Transpose(Matrix([Eltseq(mat): mat in mats1new]));
+
+    VCeta := Transpose(Matrix([&cat[[mat[i,j]: j in [i..4]]: i in [1..4]]: mat in mats1new]));
     VCetaperp := Basis(Kernel(VCeta));
-    VCetaperpmats := [Matrix(4,4, vc): vc in VCetaperp];
+
+    VCetaperpmats := [ZeroMatrix(CC,4,4): vc in VCetaperp];
+    count := 1;
+    for i in [1..4] do
+        for j in [i..4] do
+                for nu in [1..#VCetaperp] do
+                        VCetaperpmats[nu][i,j] := VCetaperp[nu][count];
+                end for;
+                count +:= 1;
+        end for;
+    end for;
     VCetaperpmats :=[(m +Transpose(m))/2 : m in VCetaperpmats];
     Qsharp := (VCetaperpmats[1]^-1+VCetaperpmats[2]^-1)^-1;
     
@@ -898,6 +909,7 @@ intrinsic ReconstructCurveG4(tau::AlgMatElt : flint := true, method := "Cayley")
   end if;
   tau_red, Q := SiegelReduction(tau);
   thetas := ComputeThetas(tau_red: flint := flint);
+  print ChangeUniverse(thetas, ComplexField(5));
   return ReconstructCurveG4(thetas: method := method);
 end intrinsic;
 
@@ -943,7 +955,7 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := true, method := "Cayley
   Pi := Pi*Q1;
   Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
   tau := Pi1^-1*Pi2;
-  vprint Reconstruction:  tau-tau_red;
+  vprintf Reconstruction: "Largest difference between entries of tau and tau_red: %o\n", Max([Abs(el) : el in Eltseq(tau-tau_red)]);
   vprint Reconstruction: "Computing thetas";
   /*
   TChars:= [Matrix(QQ, 8,1,&cat(IndexToTChar(i,4)))/2: i in [1..2^(8)]];
@@ -978,7 +990,8 @@ intrinsic RationalReconstructCurveG4(Pi::Mtrx : flint := true, method := "Cayley
   /*for c in tritangentbasis do
     chara := [Integers()!v : v in Eltseq(c)];
     chara := [chara[1..4], chara[5..8]];
-    Append(~TTB, TritangentPlane(Pi, chara));
+    //Append(~TTB, TritangentPlane(Pi, chara));
+    Append(~TTB, TritangentPlaneNumerical(Pi, chara));
   end for;
   */
 
