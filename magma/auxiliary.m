@@ -9,7 +9,7 @@
  */
 
 
-import "../../CHIMP/Theta.Magma/Theta.m": CharacteristicToInteger;
+import "FlintWrapper.m": CharacteristicToInteger;
 
 //function SplitBigPeriodMatrix(Pi)
 intrinsic SplitBigPeriodMatrix(Pi::ModMatFldElt) -> Any

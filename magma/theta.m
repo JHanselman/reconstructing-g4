@@ -573,19 +573,17 @@ intrinsic SiegelReduction(tau::AlgMatElt) -> Any
 end intrinsic;
 
 intrinsic ThetaDerivativesNumerical(char::SeqEnum, tau::AlgMatElt : prec:=-1) -> Any
-  {Compute numerical derivates of theta function at origin}
-  CC<I> := BaseRing(Parent(tau));
+  {Compute the gradient in z at the origin, [d/dz_1 theta, ..., d/dz_g theta],
+   of the theta function with characteristic char = [a, b] (entries in \{0,1\}).
+   The derivatives are computed rigorously by FLINT (ThetaFlint with ord := 1);
+   the name is historical, they are no longer finite differences.}
+  CC := BaseRing(Parent(tau));
   g := Nrows(tau);
-  if prec eq -1 then
-    prec := Precision(CC);
+  if prec gt 0 and prec lt Precision(CC) then
+    CC := ComplexField(prec);
+    tau := ChangeRing(tau, CC);
   end if;
-  epsilon := CC!10^(-prec);
-  thetas := [];
-  for i := 1 to g do
-    a:= ZeroMatrix(CC,4,1);
-    a[i] := epsilon;
-    Append(~thetas, ThetaFlint(char, epsilon, tau)/epsilon);
-  end for;
-  return thetas;
+  th := ThetaFlint(char, ZeroMatrix(CC, g, 1), tau : ord := 1);
+  return th[2..g+1];
 end intrinsic;
 
