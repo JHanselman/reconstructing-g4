@@ -152,6 +152,10 @@ end function;
 function WriteInput(z, tau, digits, ord)
   g := Nrows(tau);
   bits := Ceiling(digits*Log(2, 10)) + 64;
+  // Sprintf wraps long numbers with "\\\n" at the terminal width unless
+  // SetColumns(0) is in effect; switch wrapping off while we format.
+  cols := GetColumns();
+  SetColumns(0);
   s := Sprintf("%o %o %o\n", g, bits, ord);
   for i in [1..g] do
     s cat:= ComplexToArbLines(z[i,1], digits);
@@ -159,6 +163,7 @@ function WriteInput(z, tau, digits, ord)
   for i in [1..g], j in [1..g] do
     s cat:= ComplexToArbLines(tau[i,j], digits);
   end for;
+  SetColumns(cols);
   return s;
 end function;
 

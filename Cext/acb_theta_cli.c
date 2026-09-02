@@ -72,13 +72,24 @@ read_arb_line(arb_t x, FILE *in, slong prec, const char *what)
 {
     static char buf[MAXLINE];
     char *p, *q;
+    size_t len;
     if (fgets(buf, MAXLINE, in) == NULL)
     {
         fprintf(stderr, "acb_theta_cli: unexpected end of input while reading %s\n", what);
         exit(1);
     }
-    /* strip trailing newline / CR and leading blanks */
+    /* strip trailing newline / CR */
     buf[strcspn(buf, "\r\n")] = 0;
+    /* Magma wraps long output with a backslash continuation at the terminal
+       width (unless SetColumns(0)); join such continuation lines */
+    while ((len = strlen(buf)) > 0 && buf[len - 1] == '\\')
+    {
+        buf[len - 1] = 0;
+        if (fgets(buf + len - 1, (int) (MAXLINE - (len - 1)), in) == NULL)
+            break;
+        buf[strcspn(buf, "\r\n")] = 0;
+    }
+    /* leading blanks */
     p = buf;
     while (*p == ' ' || *p == '\t') p++;
     /* Magma prints 1.5E-7; arb wants 1.5e-7.  Also "0.E-30" -> "0.0e-30" */
