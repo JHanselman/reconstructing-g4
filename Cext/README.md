@@ -63,10 +63,12 @@ Magma's working precision (they are passed as balls of relative radius
 
 ## File formats (for debugging)
 
-Input: a header line `g prec_bits ord`, then `2g` lines with `Re z_i`, `Im z_i`,
-then `2g^2` lines with the entries of `tau` row by row (`Re`, `Im`).  Each number
-line is anything `arb_set_str` accepts, e.g. `0.1234 +/- 1e-30`; Magma's
-upper-case `E` exponents are accepted too.
+Input: a header `g prec_bits ord`, then `2g` numbers `Re z_i`, `Im z_i`, then
+`2g^2` numbers for the entries of `tau` row by row (`Re`, `Im`).  A number is
+either a decimal `MID` or a ball `MID +/- RAD`, in any form `arb_set_str`
+accepts; Magma's upper-case `E` exponents are fine.  The file is tokenised on
+whitespace after removing backslash-newline continuations, so it does not
+matter where Magma's line wrapping (`SetColumns`) puts newlines or `\`.
 
 Output: `[ [ ComplexField(D) | [re, im], ... ], ... ]`, one inner sequence per
 characteristic in the order above; inside, the theta value first, then the

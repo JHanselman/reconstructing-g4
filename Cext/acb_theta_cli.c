@@ -17,9 +17,10 @@
  *     line 1:            g prec_bits ord
  *     next 2g lines:     Re z_1, Im z_1, ..., Re z_g, Im z_g
  *     next 2g^2 lines:   Re tau_11, Im tau_11, Re tau_12, ... (row-major)
- * Each number line is anything arb_set_str() accepts: a decimal such as
- * "-1.2345e-7", or a ball "1.2345e-7 +/- 3e-40".  Magma prints reals with
- * an upper-case E; that is fixed up here so the Magma glue can stay simple.
+ * Each number is anything arb_set_str() accepts: a decimal such as
+ * "-1.2345e-7", or a ball "1.2345e-7 +/- 3e-40".  The file is tokenised on
+ * whitespace (backslash-newline continuations removed first), so Magma's
+ * line wrapping of long output is harmless; upper-case E is accepted.
  *
  * OUTFILE is a single Magma expression:
  *     [ [ ComplexField(D) | [re, im], [re, im], ... ], ... ]
@@ -66,51 +67,121 @@ die(const char *msg)
     exit(1);
 }
 
-/* Read one number line into an arb; tolerant of Magma-style output. */
+/* ---- input tokenizer -------------------------------------------------------
+ * Magma's Sprintf wraps long output at the terminal width: long tokens are
+ * split with a trailing backslash, and at whitespace it simply inserts a
+ * newline.  So we do not trust line structure at all: the whole file is
+ * read, backslash-newline pairs are removed, and it is split on whitespace.
+ * A number is then the token MID optionally followed by the tokens "+/-" RAD.
+ */
+static char *tokbuf = NULL;
+static char *tokpos = NULL;
+
 static void
-read_arb_line(arb_t x, FILE *in, slong prec, const char *what)
+load_input(const char *infile)
 {
-    static char buf[MAXLINE];
-    char *p, *q;
-    size_t len;
-    if (fgets(buf, MAXLINE, in) == NULL)
+    FILE *in = fopen(infile, "r");
+    long n;
+    char *r, *w;
+    if (in == NULL) die("cannot open input file");
+    fseek(in, 0, SEEK_END);
+    n = ftell(in);
+    fseek(in, 0, SEEK_SET);
+    if (n < 0) die("cannot read input file");
+    tokbuf = flint_malloc((size_t) n + 1);
+    if (fread(tokbuf, 1, (size_t) n, in) != (size_t) n) die("cannot read input file");
+    tokbuf[n] = 0;
+    fclose(in);
+    /* remove backslash-newline (and backslash-CR-newline) continuations */
+    for (r = w = tokbuf; *r; r++)
+    {
+        if (*r == '\\' && (r[1] == '\n' || (r[1] == '\r' && r[2] == '\n')))
+        {
+            r += (r[1] == '\r') ? 2 : 1;
+            continue;
+        }
+        *w++ = *r;
+    }
+    *w = 0;
+    tokpos = tokbuf;
+}
+
+static char *
+next_token(void)
+{
+    char *start;
+    while (*tokpos == ' ' || *tokpos == '\t' || *tokpos == '\n' || *tokpos == '\r')
+        tokpos++;
+    if (*tokpos == 0)
+        return NULL;
+    start = tokpos;
+    while (*tokpos && *tokpos != ' ' && *tokpos != '\t' && *tokpos != '\n' && *tokpos != '\r')
+        tokpos++;
+    if (*tokpos)
+        *tokpos++ = 0;
+    return start;
+}
+
+static char *
+peek_token(void)
+{
+    char *save = tokpos, *t;
+    while (*tokpos == ' ' || *tokpos == '\t' || *tokpos == '\n' || *tokpos == '\r')
+        tokpos++;
+    t = tokpos;
+    tokpos = save;
+    return *t ? t : NULL;
+}
+
+/* Read one real number (MID, or MID +/- RAD) into an arb. */
+static void
+read_arb_tokens(arb_t x, slong prec, const char *what)
+{
+    char *mid, *rad = NULL, *pk, *q;
+    char fixed[MAXLINE];
+    char *r;
+    mid = next_token();
+    if (mid == NULL)
     {
         fprintf(stderr, "acb_theta_cli: unexpected end of input while reading %s\n", what);
         exit(1);
     }
-    /* strip trailing newline / CR */
-    buf[strcspn(buf, "\r\n")] = 0;
-    /* Magma wraps long output with a backslash continuation at the terminal
-       width (unless SetColumns(0)); join such continuation lines */
-    while ((len = strlen(buf)) > 0 && buf[len - 1] == '\\')
+    pk = peek_token();
+    if (pk != NULL && strncmp(pk, "+/-", 3) == 0)
     {
-        buf[len - 1] = 0;
-        if (fgets(buf + len - 1, (int) (MAXLINE - (len - 1)), in) == NULL)
-            break;
-        buf[strcspn(buf, "\r\n")] = 0;
-    }
-    /* leading blanks */
-    p = buf;
-    while (*p == ' ' || *p == '\t') p++;
-    /* Magma prints 1.5E-7; arb wants 1.5e-7.  Also "0.E-30" -> "0.0e-30" */
-    for (q = p; *q; q++)
-        if (*q == 'E') *q = 'e';
-    {
-        /* fix a bare ".e" (digit-less fraction) which arb_set_str rejects */
-        char fixed[MAXLINE];
-        char *r = fixed;
-        for (q = p; *q; q++)
+        next_token();          /* the "+/-" */
+        rad = next_token();
+        if (rad == NULL)
         {
-            *r++ = *q;
-            if (*q == '.' && (q[1] == 'e' || q[1] == ' ' || q[1] == 0 || q[1] == '+'))
-                *r++ = '0';
-        }
-        *r = 0;
-        if (arb_set_str(x, fixed, prec) != 0)
-        {
-            fprintf(stderr, "acb_theta_cli: cannot parse %s from line: '%s'\n", what, buf);
+            fprintf(stderr, "acb_theta_cli: missing radius after +/- while reading %s\n", what);
             exit(1);
         }
+    }
+    /* assemble "mid +/- rad" with Magma's upper-case E lowered and a bare
+       "." before an exponent (e.g. "0.E-30") padded to "0.0E-30" */
+    r = fixed;
+    for (q = mid; *q && r < fixed + MAXLINE - 8; q++)
+    {
+        *r++ = (*q == 'E') ? 'e' : *q;
+        if (*q == '.' && (q[1] == 'E' || q[1] == 'e' || q[1] == 0))
+            *r++ = '0';
+    }
+    if (rad != NULL)
+    {
+        const char *pm = " +/- ";
+        for (q = (char *) pm; *q && r < fixed + MAXLINE - 8; q++) *r++ = *q;
+        for (q = rad; *q && r < fixed + MAXLINE - 8; q++)
+        {
+            *r++ = (*q == 'E') ? 'e' : *q;
+            if (*q == '.' && (q[1] == 'E' || q[1] == 'e' || q[1] == 0))
+                *r++ = '0';
+        }
+    }
+    *r = 0;
+    if (arb_set_str(x, fixed, prec) != 0)
+    {
+        fprintf(stderr, "acb_theta_cli: cannot parse %s from: '%s'\n", what, fixed);
+        exit(1);
     }
 }
 
@@ -193,18 +264,19 @@ compute(acb_ptr th, acb_srcptr z, const acb_mat_t tau, slong ord, slong prec)
 static int
 run(const char *infile, const char *outfile)
 {
-    FILE *in, *out;
+    FILE *out;
     slong g, prec, ord, i, j, nb, n2, digits, d;
     acb_ptr z, th;
     acb_mat_t tau;
-    char header[MAXLINE];
     long lg, lprec, lord;
 
-    in = fopen(infile, "r");
-    if (in == NULL) die("cannot open input file");
-    if (fgets(header, MAXLINE, in) == NULL) die("empty input file");
-    if (sscanf(header, "%ld %ld %ld", &lg, &lprec, &lord) != 3)
-        die("header must be: g prec_bits ord");
+    load_input(infile);
+    {
+        char *t1 = next_token(), *t2 = next_token(), *t3 = next_token();
+        if (t1 == NULL || t2 == NULL || t3 == NULL ||
+            sscanf(t1, "%ld", &lg) != 1 || sscanf(t2, "%ld", &lprec) != 1 || sscanf(t3, "%ld", &lord) != 1)
+            die("header must be: g prec_bits ord");
+    }
     g = lg; prec = lprec; ord = lord;
     if (g < 1 || g > 16) die("g out of range (1..16)");
     if (prec < 16) die("prec_bits must be >= 16");
@@ -214,16 +286,16 @@ run(const char *infile, const char *outfile)
     acb_mat_init(tau, g, g);
     for (i = 0; i < g; i++)
     {
-        read_arb_line(acb_realref(z + i), in, prec, "Re z");
-        read_arb_line(acb_imagref(z + i), in, prec, "Im z");
+        read_arb_tokens(acb_realref(z + i), prec, "Re z");
+        read_arb_tokens(acb_imagref(z + i), prec, "Im z");
     }
     for (i = 0; i < g; i++)
         for (j = 0; j < g; j++)
         {
-            read_arb_line(acb_realref(acb_mat_entry(tau, i, j)), in, prec, "Re tau");
-            read_arb_line(acb_imagref(acb_mat_entry(tau, i, j)), in, prec, "Im tau");
+            read_arb_tokens(acb_realref(acb_mat_entry(tau, i, j)), prec, "Re tau");
+            read_arb_tokens(acb_imagref(acb_mat_entry(tau, i, j)), prec, "Im tau");
         }
-    fclose(in);
+    flint_free(tokbuf);
 
     /* force exact symmetry (Magma's tau is only symmetric to working precision) */
     for (i = 0; i < g; i++)
