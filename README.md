@@ -45,7 +45,7 @@ make          # Linux with libflint-dev >= 3.1
 make mac      # macOS: brew install flint mpfr gmp
 make test     # self-test
 ```
-FLINT 3.1 or later is required (`acb_theta` was added in 3.1); Ubuntu 24.04's `libflint-dev` is 3.0.1 and is not enough, even though it suffices for the Belyi solvers. On such a machine, or on a server without admin rights, build a private FLINT once and link statically against it:
+FLINT 3.1 or later is required (`acb_theta` was added in 3.1); Ubuntu 24.04's `libflint-dev` is 3.0.1 and is not enough. On such a machine, or on a server without admin rights, build a private FLINT once and link statically against it:
 ```
 cd Cext
 sh build_deps.sh   # GMP + MPFR + FLINT into ~/.local/acb_theta, 10-30 minutes
