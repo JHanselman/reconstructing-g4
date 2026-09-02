@@ -104,14 +104,30 @@ function AcbThetaBinary()
     Append(~candidates, env);
   end if;
   // <repo>/magma/FlintWrapper.m  ->  <repo>/Cext/acb_theta_cli
-  filenames := GetFilenames(ThetaCharacteristicToInteger);
-  if #filenames ge 1 then
-    parts := Split(filenames[1,1], "/");
-    if #parts ge 3 then
-      repo := "/" cat Join(parts[1..#parts-2], "/");
-      Append(~candidates, repo cat "/Cext/acb_theta_cli");
+  // (GetFilenames only exists in recent Magma versions, so look it up by name
+  // and call it through the handle rather than referencing it directly)
+  try
+    has_gf, GetFilenamesI := IsIntrinsic("GetFilenames");
+    if has_gf then
+      filenames := GetFilenamesI(ThetaCharacteristicToInteger);
+      if #filenames ge 1 then
+        parts := Split(filenames[1,1], "/");
+        if #parts ge 3 then
+          repo := "/" cat Join(parts[1..#parts-2], "/");
+          Append(~candidates, repo cat "/Cext/acb_theta_cli");
+        end if;
+      end if;
     end if;
-  end if;
+  catch e
+    _ := true;
+  end try;
+  // relative to the current directory: the repo root, or a subdirectory of it
+  // such as examples/paper-examples
+  for up in ["", "../", "../../", "../../../"] do
+    Append(~candidates, up cat "Cext/acb_theta_cli");
+    Append(~candidates, up cat "reconstructing-g4/Cext/acb_theta_cli");
+  end for;
+  // on $PATH
   try
     onpath := Split(Pipe("command -v acb_theta_cli 2>/dev/null", ""), "\n");
     if #onpath ge 1 and onpath[1] ne "" then
@@ -120,6 +136,11 @@ function AcbThetaBinary()
   catch e
     _ := true;
   end try;
+  // usual checkout locations
+  home := GetEnv("HOME");
+  if home ne "" then
+    candidates cat:= [ home cat d cat "/reconstructing-g4/Cext/acb_theta_cli" : d in ["", "/github", "/Github", "/git", "/code", "/src"] ];
+  end if;
   for c in candidates do
     if FileExists(c) then
       vprintf ThetaFlint, 2: "ThetaFlint: using binary %o\n", c;
