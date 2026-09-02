@@ -159,11 +159,17 @@ end function;
 // whose radius reflects the working precision, so that FLINT's certified
 // output precision honestly accounts for the input precision (same choice as
 // CHIMP's python-flint wrapper).
+// (ReplaceCharacter is a CHIMP intrinsic, not a Magma one; do it by hand so
+// that this file has no dependency on CHIMP)
+function UpperEToLower(s)
+  return &cat[ c eq "E" select "e" else c : c in Eltseq(s) ];
+end function;
+
 function RealToArbString(x, digits)
   RR := RealField(digits);
   x := RR!x;
   rad := Max(Abs(x), RR!1) * RR!10^(1-digits);
-  return ReplaceCharacter(Sprintf("%o +/- %.*o", x, 3, rad), "E", "e");
+  return UpperEToLower(Sprintf("%o +/- %.*o", x, 3, rad));
 end function;
 
 function ComplexToArbLines(x, digits)

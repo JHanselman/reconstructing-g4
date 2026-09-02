@@ -71,8 +71,10 @@ for cand in [chimp_root cat "/Theta.magma/flint/bin/python", "python3", "python"
   end try;
 end for;
 
-// verbatim from CHIMP/Theta.magma/PythonFlint.m
-to_arb := func<elt | ReplaceCharacter(Sprintf("arb('%o +/- %.*o')", elt, 3, Max(Abs(elt)*10^(1-Precision(Parent(elt))), 10^(1-Precision(Parent(elt)))) ), "E", "e")>;
+// verbatim from CHIMP/Theta.magma/PythonFlint.m, except that ReplaceCharacter
+// (a CHIMP intrinsic) is replaced by a local equivalent
+ReplaceChar := func<s, c, d | &cat[ ch eq c select d else ch : ch in Eltseq(s) ]>;
+to_arb := func<elt | ReplaceChar(Sprintf("arb('%o +/- %.*o')", elt, 3, Max(Abs(elt)*10^(1-Precision(Parent(elt))), 10^(1-Precision(Parent(elt)))) ), "E", "e")>;
 to_acb := func<elt | Sprintf("acb(%o, %o)", to_arb(Real(elt)), to_arb(Imaginary(elt)))>;
 to_acb_list := func<elt | Sprintf("[%o]", Join([to_acb(x) : x in elt], ", "))> ;
 to_acb_matrix := func<elt | Sprintf("acb_mat([%o])", Join([to_acb_list(Eltseq(x)) : x in Rows(elt)], ", ")) >;
