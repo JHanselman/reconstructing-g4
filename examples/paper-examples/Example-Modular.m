@@ -9,8 +9,16 @@
  */
 
 
-AttachSpec("~/reconstructing-g4/magma/spec");
-AttachSpec("~/Genus-4/magma/spec");
+AttachSpec("../../../reconstructing-g4/magma/spec");
+AttachSpec("../../../GL-Equivalence/magma/spec");   // needed by Genus-4
+AttachSpec("../../../Genus-4/magma/spec");
+// `load` is only allowed at top level (not inside if/for blocks), so load
+// everything the optional verification below needs here; these files only
+// define functions.  (DiscriminantFromInvariantsGenus4 comes from the Genus-4
+// spec; the old decomposition.m no longer exists in that package.)
+load "../../../reconstructing-g4/magma/min_red_g4.m";
+load "778.2.a.a.m";
+verify_with_newform := false;   // set to true for the (slow) check against 778.2.a.a
 
 
 CC<I> := ComplexField(300);
@@ -19,6 +27,7 @@ Pi :=  KMatrixSpace(ComplexField(300), 4, 8)!
 
 Pi1, Pi2 := SplitBigPeriodMatrix(Pi);
 Eqs := RationalReconstructCurveG4(HorizontalJoin(Pi2, Pi1));
+print "Curve found! The equations are:", Eqs;
 
 
 CC1:= ComplexField(150);
@@ -30,29 +39,25 @@ tau_red, Q := SiegelReduction(tau);
 //err := Abs(SchottkyModularForm(tau_red : prec := 150));
 //print "Absolute value of Schottky modular form is", err;
 
-
-Eqstest := ReconstructCurveG4(ChangeRing(tau_red, ComplexField(75)): method := "Cayley");
-
-if false then
+if verify_with_newform then
 Eqs := RationalReconstructCurveG4(HorizontalJoin(Pi2, Pi1): method := "");
-print "Curve found! The equations are:", Eqs;
+print "Curve found (method := \"\")! The equations are:", Eqs;
 
 // improve equation
-load "~/github/reconstructing-g4/magma/min_red_g4.m";
 R := Parent(Eqs[1]);
 quadric, cubic := Explode(Eqs);
 quadric, cubic := MinimizeG4(quadric, cubic);
 C := Curve(Proj(R), [quadric, cubic]);
+printf "Improved curve equations: %o\n", C;
 // compute invariants of curve using Thomas Bouchet's package
 invs := InvariantsGenus4Curves(quadric,cubic);
-load "~/github/Genus-4/magma/decomposition.m";
 disc := DiscriminantFromInvariantsGenus4(invs);
 printf "discriminant = %o\n", disc;
 facts := Factorization(Numerator(disc)); // prime factor 113 is not actually bad in this example
 printf "Factorization of discriminant %o\n", facts;
 
 // compare aps with modular form downloaded from LMFDB
-load "778.2.a.a.m";
+print "Comparing curve and modular form L-functions";
 f := MakeNewformModFrm_778_2_a_a(: prec := 1000);
 Kf := CoefficientField(f);
 bad_ps := [el[1] : el in facts];
@@ -71,4 +76,7 @@ end for;
 tt1 := Cputime();
 printf "Total time for verification: %o s\n", tt1-tt0;
 print "L-functions match for all primes up to 1000";
+end if;
+if not verify_with_newform then
+  print "Skipping the verification against the newform 778.2.a.a (set verify_with_newform := true at the top of this file to run it; it rebuilds the newform to precision 1000 and takes a long time). For a quick check at small primes run tests/run_example_modular.m instead.";
 end if;
