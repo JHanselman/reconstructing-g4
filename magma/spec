@@ -2,6 +2,7 @@
   auxiliary.m
   azygetic.m
   fast_theta.m
+  FlintWrapper.m
   gluingfuncs.m
   igusa_quartic.m
   reconstruction.m

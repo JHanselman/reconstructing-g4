@@ -58,7 +58,5 @@
   //res := ReconstructCurveG4(SmallPeriodMatrix(Q)^-1);
   Eqs := RationalReconstructCurveG4(Q);
 
-
-
-
+  printf "Equations found: %o\n", Eqs;
 
