@@ -1,4 +1,4 @@
-load "construct-Lemma-Section-3.2-proofs.m";
+load "construct-Finite-Field-example.m";
 
 list := [[2,3], [1,3], [1,2], [3,4], [2,4], [1,4]] cat &cat[[[j, 4+i]: i in [1..3]]: j in [1..3]] cat [[6,7], [5,7], [5,6]] cat [[4,5], [4,6], [4,7]];
 bits := [[GF(37)| 1,0,0], [0,1,0], [0,0,1], [1,1,1], [Random(GF(37)): i in [1..3]], [Random(GF(37)): i in [1..3]],[Random(GF(37)): i in [1..3]]];
